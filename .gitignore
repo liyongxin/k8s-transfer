@@ -1,0 +1,8 @@
+.idea/
+*.pyc
+pem/
+.DS_Store
+.coverage
+furion/test.db*
+*.egg-info/*
+.pytest_cache
