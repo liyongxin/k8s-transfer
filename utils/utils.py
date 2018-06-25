@@ -144,6 +144,15 @@ def no_common_task_record(task):
 
 
 if __name__ == '__main__':
-    url = consts.URLS["get_svc_v2"].format(service_name="pro2-svc-1")
-    data = send_request("GET", url, specific_project="yxli-pro-2")
+    url = consts.URLS["create_get_ns"]
+    data = {
+        "cluster": {
+            "uuid": "",
+            "name": "htzq"
+        },
+        "resource": {
+            "name": "default--dev-c"
+        }
+    }
+    data = send_request("POST", url, specific_project="yxli-pro-2")
     print data

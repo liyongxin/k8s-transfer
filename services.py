@@ -223,8 +223,7 @@ def get_volume_mounts(svc_id):
                 volume_obj = {
                     "name": "hostpath-" + svc_name + "-" + str(index),
                     "hostPath": {
-                        "path": vol["volume_name"],
-                        "type": ""
+                        "path": vol["volume_name"]
                     }
                 }
                 mount_obj = {
@@ -303,6 +302,24 @@ def get_svc_node_ports(svc_ports):
     return ports
 
 
+def get_subnet_by_id(subnet_id):
+    subnets = utils.send_request("GET", consts.URLS["get_subnets"])
+    for subnet in subnets:
+        if subnet_id == subnet["subnet_id"]:
+            return subnet["subnet_name"]
+    return None
+
+
+def get_instance_ips(instances):
+    ips = []
+    for instance in instances:
+        if instance["container_ip"]:
+            ips.append(instance["container_ip"])
+        else:
+            raise Exception("find no container ip for macvlan svc !! break!!")
+    return ",".join(ips)
+
+
 def trans_pod_controller(svc):
     kubernetes_attr = []
     k8s_controller = {
@@ -355,10 +372,14 @@ def trans_pod_controller(svc):
         }
     }
     # handle macvlan annotations, subnet_id
-    if svc["network_mode"] == "MACVLAN":
-        k8s_controller["metadata"]["annotations"] = {
-                "key-for-subnet-name": "subnet-name",
-                "key-for-spec-ip": "spec-ip"
+    # todo
+    if svc["network_mode"] == "MACVLAN" and svc["subnet_id"]:
+        print "\nbegin handle macvlan subnet"
+        subnet_name = get_subnet_by_id(svc["subnet_id"])
+        print "get subnet name {} for subnet_id {}".format(subnet_name, svc["subnet_id"])
+        k8s_controller["spec"]["template"]["metadata"]["annotations"] = {
+                "subnet.alauda.io/name": subnet_name,
+                "subnet.alauda.io/ipAddrs": get_instance_ips(svc["instances"])  # "192.168.10.100,192.168.10.111"
             }
 
     # handle self command

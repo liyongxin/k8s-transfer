@@ -6,3 +6,8 @@ if __name__ == '__main__':
         print url + "&project_name=alauda"
     else:
         print url + "?project_name=alauda"
+
+    ips = []
+    ips.append("aaa")
+    ips.append("vvv")
+    print ",".join(ips)

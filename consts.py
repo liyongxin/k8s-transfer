@@ -36,6 +36,8 @@ URLS = {
         namespace=Configs['namespace'], region_name=Configs['region_name']),
     "get_svc_v2": "/v2/services/?cluster={region_name}&name={service_name}".format(
         region_name=Configs['region_name'], service_name="{service_name}"),
+    "get_subnets": "/v1/subnets/{namespace}?region_name={region_name}".format(
+        namespace=Configs['namespace'], region_name=Configs['region_name']),
     "get_or_delete_svc_detail": "/v1/services/{namespace}/{service_id}".format(
         namespace=Configs['namespace'], service_id="{service_id}"),
     "get_config_content": "/v1/configs/{namespace}/{filename}".format(
