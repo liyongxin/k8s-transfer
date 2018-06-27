@@ -11,3 +11,5 @@ if __name__ == '__main__':
     ips.append("aaa")
     ips.append("vvv")
     print ",".join(ips)
+
+    print "begin {}".format("" or "default")

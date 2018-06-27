@@ -6,7 +6,7 @@ import namespaces
 from utils import utils
 
 
-def create_cm_bak():
+def create_cm_v1():
     svc_list = services.get_service_list()
     for svc in svc_list:
         cm_file_name = consts.Prefix["cm_name_prefix"] + svc["service_name"]

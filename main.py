@@ -3,6 +3,7 @@ import lb
 import cm
 import namespaces
 import project
+import consts
 from utils import utils
 
 if __name__ == '__main__':
@@ -16,17 +17,24 @@ if __name__ == '__main__':
     confirm
     """
     if utils.check_region_version():
-        print "\nPlease check configMap && update region version from v2 to v3;\n"
+        print "update app_region set platform_version = 'v3' where name='{region_name}'".\
+            format(region_name=consts.Configs["region_name"])
+        print "\nPlease execute sql to update region version from v2 to v3;\n"
         exit(1)
-    # init
+
+    # build sql for table jakiro.resources_resource, should be executed by hands
+    if utils.no_common_task_record("sync_namespace"):
+        namespaces.sync_ns()
+        print "\nPlease execute sql for jakiro db by hands;\n"
+        utils.task_common_record("sync_namespace")
+        exit(1)
+
+    # init lb info
     if utils.no_common_task_record("init_lb"):
         lb.init_lb()
         utils.task_common_record("init_lb")
-    # by project
+    # transfer by project
     projects = utils.get_projects()
-    # add default
-    projects.append({"name": ""})
-
     for pro in projects:
         # init project
         project.init_current_project(pro["name"])
@@ -42,9 +50,6 @@ if __name__ == '__main__':
             cm.init_cm()
             utils.task_record("init_cm")
 
-        if utils.no_task_record("sync_namespace"):
-            namespaces.sync_ns()
-            utils.task_record("sync_namespace")
         if utils.no_task_record("create_cm"):
             cm.create_cm()
             utils.task_record("create_cm")

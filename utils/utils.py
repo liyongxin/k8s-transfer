@@ -74,6 +74,9 @@ def get_region_info(key=None):
 
 def get_projects():
     projects = send_request("GET", consts.URLS["get_projects"])
+
+    # add default project(no project)
+    projects.append({"name": ""})
     return projects
 
 
