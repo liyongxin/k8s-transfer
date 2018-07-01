@@ -78,10 +78,9 @@ def sync_ns_v2():
 
 def sync_ns():
     sqls = []
-    sql_tpl = """
-    insert into resources_resource values(nextval('resources_resource_id_seq'::regclass),'NAMESPACE','{uuid}',
-    '{namespace}','{created_by}','2018-06-20 11:50:15','{region_id}:{k8s_ns_name}','region_id','','{project_uuid}','';)
-    """
+    sql_tpl = "insert into resources_resource values(nextval('resources_resource_id_seq'::regclass),'NAMESPACE'," \
+              "'{uuid}','{namespace}','{created_by}','2018-06-20 11:50:15','{region_id}:{k8s_ns_name}','region_id'," \
+              "'','{project_uuid}','';)"
     projects = utils.get_projects()
     for pro in projects:
         name = pro["name"]

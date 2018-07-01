@@ -2,6 +2,7 @@ import os
 import consts
 
 project_file = consts.Prefix["current_project_file"]
+default_project = "default"
 
 
 def get_current_project():
@@ -13,10 +14,18 @@ def get_current_project():
     return project
 
 
+def get_default_project():
+    return default_project
+
+
+def get_default_folder():
+    return default_project + "/"
+
+
 def get_current_folder():
     folder = get_current_project()
     if not folder:
-        folder = "default"
+        folder = default_project
     if not os.path.exists(folder):
         os.mkdir(folder)
     return folder + "/"
@@ -33,7 +42,7 @@ def init_current_project(project=None):
     folder = project
     if not project:
         project = ""
-        folder = "default"
+        folder = default_project
     writer = open(project_file, "w")
     writer.write(project)
     writer.close()

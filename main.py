@@ -31,7 +31,8 @@ if __name__ == '__main__':
 
     # init lb info
     if utils.no_common_task_record("init_lb"):
-        lb.init_lb()
+        lb.init_lb_list()
+        lb.init_svc_lb()
         utils.task_common_record("init_lb")
     # transfer by project
     projects = utils.get_projects()
@@ -55,5 +56,4 @@ if __name__ == '__main__':
             utils.task_record("create_cm")
         # service trans
         services.main()
-    lb.main()
 

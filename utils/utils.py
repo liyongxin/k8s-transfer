@@ -88,6 +88,10 @@ def get_current_folder():
     return project.get_current_folder()
 
 
+def get_default_folder():
+    return project.get_default_folder()
+
+
 def check_region_version():
     if get_region_info("platform_version") == "v2":
         return True

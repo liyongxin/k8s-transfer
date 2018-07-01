@@ -3,6 +3,7 @@ import time
 import consts
 import namespaces
 import project
+import lb
 from os import path
 from utils import utils
 
@@ -160,6 +161,14 @@ def get_health_check(svc_id):
         }
     }
     return result
+
+
+def get_create_method(svc_id):
+    svc = get_service_detail(svc_id)
+    if len(svc["mount_points"]) > 0:
+        return "yaml"
+    else:
+        return "UI"
 
 
 def get_volume_mounts(svc_id):
@@ -322,12 +331,13 @@ def get_instance_ips(instances):
 
 def trans_pod_controller(svc):
     kubernetes_attr = []
+    service_name = svc["service_name"]
     k8s_controller = {
         "apiVersion": "extensions/v1beta1",
         "kind": svc["pod_controller"],
         "metadata": {
             "namespace": "",
-            "name": svc["service_name"]
+            "name": service_name
         },
         "spec": {
             "template": {
@@ -338,7 +348,7 @@ def trans_pod_controller(svc):
                     "affinity": get_svc_affinity(svc),
                     "containers": [
                         {
-                            "name": svc["service_name"] + "-0",
+                            "name": service_name + "-0",
                             "image": svc["image_name"] + ":" + svc["image_tag"],
                             "imagePullPolicy": "Always",
                             "resources": {
@@ -395,18 +405,37 @@ def trans_pod_controller(svc):
 
     kubernetes_attr.append(k8s_controller)
 
+    # handle "autoscaling/v1"
+    autoscaling = {
+        "apiVersion": "autoscaling/v1",
+        "kind": "HorizontalPodAutoscaler",
+        "metadata": {
+            "name": service_name,
+            "namespace": ""
+        },
+        "spec": {
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "scaleTargetRef": {
+                "apiVersion": "extensions/v1beta1",
+                "kind": "Deployment",
+                "name": service_name
+            }
+        }
+    }
+    kubernetes_attr.append(autoscaling)
     # handle clusterIp
     if "ports" in svc and len(svc["ports"]) > 0:
         k8s_service = {
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": svc["service_name"],
+                "name": service_name,
                 "namespace": svc["service_namespace"]
             },
             "spec": {
                 "selector": {
-                    "service.alauda.io/name": svc["service_name"]
+                    "service.alauda.io/name": service_name
                 },
                 "ports": get_svc_cluster_ports(svc["ports"])
             }
@@ -446,7 +475,7 @@ def trans_pod_controller(svc):
 def trans_svc_data(svc):
     app_data = {
         "resource": {
-            "create_method": "UI"
+            "create_method": get_create_method(svc["uuid"])
         },
         "kubernetes": []
     }
@@ -463,9 +492,7 @@ def trans_svc_data(svc):
         "name": svc["region_name"],
         "uuid": svc["region_uuid"]
     }
-    vol_mounts = get_volume_mounts(svc["uuid"])
-    if len(vol_mounts["volumes"]) > 0:
-        app_data["resource"]["create_method"] = "yaml"
+
     app_data["kubernetes"] = trans_pod_controller(get_service_detail(svc["uuid"]))
     return app_data
 
@@ -479,20 +506,33 @@ def delete_old_svc(svc_id):
     utils.send_request("DELETE", consts.URLS["get_or_delete_svc_detail"].format(service_id=svc_id))
 
 
+def get_v1_svc_by_api(svc_id):
+    return utils.send_request("GET", consts.URLS["get_or_delete_svc_detail"].format(service_id=svc_id))
+
+
+def get_app_by_api(app_id):
+    return utils.send_request("GET", consts.URLS["get_app_by_id"].format(service_id=app_id))
+
+
 def main():
     svc_list = get_service_list()
     for svc in svc_list:
         service_name = svc["service_name"]
         service_status = svc["current_status"]
-        # skipped excluded services in consts.ExcludedServiceNames
-        if service_name in consts.ExcludedServices:
-            print "skipped service {} because configed in consts.ExcludedServiceNames".format(service_name)
-            continue
-        if service_status not in consts.IncludeServiceStatus:
-            print "skipped service {} because current_status is {}".format(service_name, service_status)
-            continue
+
         task_single_svc = "trans_svc_{svc_id}_{svc_name}".format(svc_id=svc["uuid"], svc_name=service_name)
         if utils.no_task_record(task_single_svc):
+            # skipped excluded services in consts.ExcludedServiceNames
+            if service_name in consts.ExcludedServices:
+                print "skipped service {} because configed in consts.ExcludedServiceNames".format(service_name)
+                continue
+            if service_status not in consts.IncludeServiceStatus:
+                raw_tips = "{service_name} status is {service_status}, input Yes/No for continue or skip ".\
+                    format(service_name=service_name, service_status=service_name)
+                answer = raw_input(raw_tips)
+                if answer.lower() == "no":
+                    print "skipped service {} because current_status is {}".format(service_name, service_status)
+                    continue
             print "begin trans service data to app data for service {}".format(service_name)
             app_data = trans_svc_data(svc)
             print "app data for service {}".format(service_name)
@@ -500,10 +540,29 @@ def main():
             print "\nbegin delete service old service {}".format(service_name)
             delete_old_svc(svc["uuid"])
             print "\nwaiting service {} for delete ".format(service_name)
-            time.sleep(10)
+            for count in range(20):
+                time.sleep(3)
+                svc = get_v1_svc_by_api(svc["uuid"])
+                if not svc:
+                    print "\n service {} delete done".format(service_name)
+                    break
+
             print "\nbegin create app for service {} ".format(service_name)
             app_info = create_app(app_data)
             # print app_info
+            print "\nwaiting new app {} for create ".format(service_name)
+            for count in range(20):
+                time.sleep(3)
+                app = get_app_by_api(app_info["resource"]["uuid"])
+                app_current_state = app["resource"]["status"]
+                if app_current_state == "Running":
+                    print "\n app {} create done".format(service_name)
+                    break
+                else:
+                    print "\n app {} current status is {}, contine waiting...".format(service_name, app_current_state)
+
+            # handle lb binding
+            lb.handle_lb_for_svc(service_name)
             # if service_status == "Stopped":
             #    app_id = app_info["resource"]["uuid"]
             #    utils.send_request("PUT", consts.URLS["stop_app"].format(app_id=app_id))

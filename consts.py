@@ -21,7 +21,8 @@ ExcludedServices = []
 
 IncludeServiceStatus = [
     "Running",
-    "Stopped"
+    "Stopped",
+    "StartError"
 ]
 
 URLS = {
@@ -36,6 +37,8 @@ URLS = {
         namespace=Configs['namespace'], region_name=Configs['region_name']),
     "get_svc_v2": "/v2/services/?cluster={region_name}&name={service_name}".format(
         region_name=Configs['region_name'], service_name="{service_name}"),
+    "get_svc_by_id_v2": "/v2/services/{service_id}",
+    "get_app_by_id": "/v2/apps/{app_id}",
     "get_subnets": "/v1/subnets/{namespace}?region_name={region_name}".format(
         namespace=Configs['namespace'], region_name=Configs['region_name']),
     "get_or_delete_svc_detail": "/v1/services/{namespace}/{service_id}".format(

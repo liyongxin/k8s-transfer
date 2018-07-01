@@ -6,7 +6,7 @@ import services
 from utils import utils
 
 
-def init_lb():
+def init_lb_list():
     lb_list = utils.send_request("GET", consts.URLS["get_lb"])
     for lb in lb_list:
         # lb_ft = get_lb_frontends(lb["name"])
@@ -16,8 +16,27 @@ def init_lb():
         writer.close()
 
 
+def init_svc_lb():
+    svc_list = services.get_service_list()
+    get_lb_url = consts.URLS["get_lb"]
+    for svc in svc_list:
+        url = get_lb_url + "&service_id=" + svc["uuid"]
+        svc_lb_data = utils.send_request("GET", url)
+        filename = utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + svc["service_name"]
+        writer = open(filename, "w")
+        writer.write(json.dumps(svc_lb_data))
+        writer.close()
+
+
 def get_lb(lb_file):
     reader = open(utils.get_current_folder() + lb_file, "r")
+    lb_data = json.load(reader)
+    reader.close()
+    return lb_data
+
+
+def get_svc_lb(svc_name):
+    reader = open(utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + svc_name, "r")
     lb_data = json.load(reader)
     reader.close()
     return lb_data
@@ -120,6 +139,37 @@ def main():
                         print "\nnew rule info is: {}\n".format(json.dumps(rule_info))
                         if "services" in rule and len(rule["services"]) > 0:
                             bind_rule_svc(lb_name, frontend["port"], rule_info["data"]["rule_id"], rule["services"])
+
+
+def handle_lb_for_svc(svc_name):
+    print "\nbegin handle lb bindings for svc {}".format(svc_name)
+    svc_lb_data = get_svc_lb(svc_name)
+    for lb_data in svc_lb_data["result"]:
+        lb_name = lb_data["name"]
+        for frontend in lb_data["frontends"]:
+            port = frontend["port"]
+            frontend_task = lb_name + "_frontend_" + str(port)
+            if utils.no_task_record(frontend_task):
+                print "begin create frontend for  lb {} and port {}".format(lb_name, port)
+                create_frontend(lb_name, frontend)
+                utils.task_record(frontend_task)
+            if frontend["protocol"] == "tcp":
+                print "\nskip tcp frontend {} rules create\n".format(port)
+                continue
+            rules = frontend["rules"]
+            for rule in rules:
+                rule_task = lb_name + "_frontend_" + str(port) + "_rule_" + rule["rule_id"]
+                if utils.no_task_record(rule_task):
+                    if rule["type"] == "system":
+                        continue
+                    print "\nbegin create rule for domain {} and port {}".format(rule["domain"], port)
+                    rule_info = create_rule(lb_name, port, copy.deepcopy(rule))
+                    # record rule create task
+                    utils.task_record(rule_task)
+
+                    print "\nnew rule info is: {}\n".format(json.dumps(rule_info))
+                    if "services" in rule and len(rule["services"]) > 0:
+                        bind_rule_svc(lb_name, frontend["port"], rule_info["data"]["rule_id"], rule["services"])
 
 
 if __name__ == '__main__':
