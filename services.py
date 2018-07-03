@@ -14,7 +14,7 @@ def get_svc_list_for_current_project(results=None):
     svc_list = utils.send_request('GET', consts.URLS['get_svc_list'])
     results.extend(svc_list['results'])
     # has to be len(svc_list['results']), not svc_list['count']
-    if len(svc_list['results']) > 100:
+    if len(svc_list['results']) >= 100:
         get_svc_list_for_current_project(results)
     return results
 
@@ -143,6 +143,10 @@ def get_svc_env(svc_id):
                     "value": env[1]
                 })
     return result
+
+
+def get_envfile_by_id(file_id):
+    return utils.send_request("GET", consts.URLS["get_envfile"])
 
 
 def get_health_check(svc_id):
@@ -317,6 +321,11 @@ def get_subnet_by_id(subnet_id):
         if subnet_id == subnet["subnet_id"]:
             return subnet["subnet_name"]
     return None
+
+
+def get_service_v2_instances(service_id):
+    instances = utils.send_request("GET", consts.URLS["get_svc_v2_instances"].format(service_id=service_id))
+    return instances
 
 
 def get_instance_ips(instances):
@@ -514,6 +523,14 @@ def get_app_by_api(app_id):
     return utils.send_request("GET", consts.URLS["get_app_by_id"].format(service_id=app_id))
 
 
+def update_app(app):
+    data = {
+        "namespace": app["cluster"]["name"],
+        "kubernetes": app["kubernetes"]
+    }
+    utils.send_request("PATCH", consts.URLS["get_app_by_id"].format(service_id=app["resource"]["uuid"]), data)
+
+
 def main():
     svc_list = get_service_list()
     for svc in svc_list:
@@ -559,8 +576,20 @@ def main():
                     print "\n app {} create done".format(service_name)
                     break
                 else:
-                    print "\n app {} current status is {}, contine waiting...".format(service_name, app_current_state)
-
+                    print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
+            # begin update app for bind old tag
+            app = get_app_by_api(app_info["resource"]["uuid"])
+            update_app(app)
+            print "\nwaiting app {} for update ".format(service_name)
+            for count in range(20):
+                time.sleep(3)
+                app = get_app_by_api(app_info["resource"]["uuid"])
+                app_current_state = app["resource"]["status"]
+                if app_current_state == "Running":
+                    print "\n app {} update done".format(service_name)
+                    break
+                else:
+                    print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
             # handle lb binding
             lb.handle_lb_for_svc(service_name)
             # if service_status == "Stopped":

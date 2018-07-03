@@ -4,6 +4,7 @@ import cm
 import namespaces
 import project
 import consts
+import pipeline
 from utils import utils
 
 if __name__ == '__main__':
@@ -56,4 +57,5 @@ if __name__ == '__main__':
             utils.task_record("create_cm")
         # service trans
         services.main()
+        pipeline.main()
 

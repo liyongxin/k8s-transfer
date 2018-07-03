@@ -37,6 +37,8 @@ def send_request(method, url, params=None, specific_project=None):
             resp = requests.post(req_url, data=json.dumps(params), headers=headers)
         elif method == 'PUT':
             resp = requests.put(req_url, data=json.dumps(params), headers=headers)
+        elif method == 'PATCH':
+            resp = requests.patch(req_url, data=json.dumps(params), headers=headers)
         elif method == 'DELETE':
             resp = requests.delete(req_url, headers=headers)
         else:
@@ -148,6 +150,19 @@ def no_common_task_record(task):
             return False
     print '\n==============' + task + ' starting to execute==============\n'
     return True
+
+
+def file_writer(filename, data, mode="w"):
+    writer = open(filename, mode)
+    writer.write(json.dumps(data))
+    writer.close()
+
+
+def file_reader(filename):
+    reader = open(filename, "r")
+    data = json.load(reader)
+    reader.close()
+    return data
 
 
 if __name__ == '__main__':
