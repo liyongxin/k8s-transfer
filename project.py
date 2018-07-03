@@ -46,6 +46,7 @@ def init_current_project(project=None):
     writer = open(project_file, "w")
     writer.write(project)
     writer.close()
+
     if not os.path.exists(folder):
         os.mkdir(folder)
 

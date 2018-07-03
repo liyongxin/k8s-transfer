@@ -22,9 +22,7 @@ def get_svc_list_for_current_project(results=None):
 def init_svc_list():
     svc_list = get_svc_list_for_current_project(results=[])
     file_name = utils.get_current_folder() + consts.Prefix["service_list_file"]
-    writer = open(file_name, "w")
-    writer.write(json.dumps(svc_list))
-    writer.close()
+    utils.file_writer(file_name, svc_list)
 
 
 def init_svc_detail():
@@ -33,23 +31,16 @@ def init_svc_detail():
         file_name_id = utils.get_current_folder() + consts.Prefix["service_detail_file"] + svc["uuid"]
         file_name_svc_name = utils.get_current_folder() + consts.Prefix["service_detail_file"] + svc["service_name"]
         svc_detail = utils.send_request("GET", consts.URLS["get_or_delete_svc_detail"].format(service_id=svc["uuid"]))
-        writer_id = open(file_name_id, "w")
-        writer_id.write(json.dumps(svc_detail))
-        writer_id.close()
-
+        utils.file_writer(file_name_id, svc_detail)
         # detail for svc_name
-        writer_name = open(file_name_svc_name, "w")
-        writer_name.write(json.dumps(svc_detail))
-        writer_name.close()
+        utils.file_writer(file_name_svc_name, svc_detail)
 
 
 def get_service_detail(svc_id_or_name):
     svc_detail = {}
     file_name = utils.get_current_folder() + consts.Prefix["service_detail_file"] + svc_id_or_name
     if path.exists(file_name):
-        reader = open(file_name, "r")
-        svc_detail = json.load(reader)
-        reader.close()
+        svc_detail = utils.file_reader(file_name)
     else:
         raise Exception("service detail file {} doesn't exists!".format(file_name))
     return svc_detail
@@ -59,9 +50,7 @@ def get_service_list():
     results = []
     file_name = utils.get_current_folder() + consts.Prefix["service_list_file"]
     if path.exists(file_name):
-        reader = open(file_name, "r")
-        results = json.load(reader)
-        reader.close()
+        results = utils.file_reader(file_name)
     else:
         raise Exception("services file doesn't exists!")
     return results

@@ -11,9 +11,7 @@ def init_lb_list():
     for lb in lb_list:
         # lb_ft = get_lb_frontends(lb["name"])
         filename = utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + lb["name"]
-        writer = open(filename, "w")
-        writer.write(json.dumps(lb))
-        writer.close()
+        utils.file_writer(filename, lb)
 
 
 def init_svc_lb():
@@ -23,23 +21,15 @@ def init_svc_lb():
         url = get_lb_url + "&service_id=" + svc["uuid"]
         svc_lb_data = utils.send_request("GET", url)
         filename = utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + svc["service_name"]
-        writer = open(filename, "w")
-        writer.write(json.dumps(svc_lb_data))
-        writer.close()
+        utils.file_writer(filename, svc_lb_data)
 
 
 def get_lb(lb_file):
-    reader = open(utils.get_current_folder() + lb_file, "r")
-    lb_data = json.load(reader)
-    reader.close()
-    return lb_data
+    return utils.file_reader(utils.get_current_folder() + lb_file)
 
 
 def get_svc_lb(svc_name):
-    reader = open(utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + svc_name, "r")
-    lb_data = json.load(reader)
-    reader.close()
-    return lb_data
+    return utils.file_reader(utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + svc_name)
 
 
 def get_lb_frontends(lb_name):

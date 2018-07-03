@@ -13,8 +13,7 @@ def create_cm_v1():
         if not os.path.exists(cm_file_name):
             print "ERROR:cm file {} doesn't exists!".format(cm_file_name)
             continue
-        reader = open(cm_file_name, "r")
-        cm_data = json.load(reader)
+        cm_data = utils.file_reader(cm_file_name)
         print "config map data for file {}".format(cm_file_name)
         print cm_data
         data = {
@@ -49,8 +48,7 @@ def create_cm():
             print "find configMap file " + filename
             if not os.path.exists(current_folder + cm_file):
                 raise "configMap file for {} not exists! please check task of init cm".format(current_folder + cm_file)
-            reader = open(current_folder + cm_file, "r")
-            cm_data = json.load(reader)
+            cm_data = utils.file_reader(current_folder + cm_file)
             print "config map data for file {},{}".format(filename, json.dumps(cm_data))
             service_name = filename.replace(consts.Prefix["cm_name_prefix"], "")
             svc_detail = services.get_service_detail(service_name)
@@ -80,10 +78,7 @@ def create_cm():
 
 
 def get_cm(cm_file):
-    reader = open(cm_file, "r")
-    cm_data = json.load(reader)
-    reader.close()
-    return cm_data
+    return utils.file_reader(cm_file)
 
 
 def init_cm():
@@ -100,7 +95,6 @@ def init_cm():
         for mp in mount_points:
             print "init configMap for service {}".format(svc_name)
             cm_name = utils.get_current_folder() + consts.Prefix["cm_name_prefix"] + svc_name
-            writer = open(cm_name, "w")
 
             if mp["type"] == "config":
                 value = mp["value"]
@@ -120,8 +114,7 @@ def init_cm():
                 cm_data[key] = content
             else:
                 raise "Unknown config type " + mp["type"]
-            writer.write(json.dumps(cm_data))
-            writer.close()
+            utils.file_writer(cm_name, cm_data)
 
 
 if __name__ == '__main__':
