@@ -26,15 +26,14 @@ if __name__ == '__main__':
     # build sql for table jakiro.resources_resource, should be executed by hands
     if utils.no_common_task_record("sync_namespace"):
         namespaces.sync_ns()
-        print "\nPlease execute sql for jakiro db by hands;\n"
+        print "Please execute sql for jakiro db by hands;\n"
         utils.task_common_record("sync_namespace")
         exit(1)
 
     # init lb info
-    if utils.no_common_task_record("init_lb"):
+    if utils.no_common_task_record("init_lb_list"):
         lb.init_lb_list()
-        lb.init_svc_lb()
-        utils.task_common_record("init_lb")
+        utils.task_common_record("init_lb_list")
     # transfer by project
     projects = utils.get_projects()
     for pro in projects:
@@ -47,6 +46,10 @@ if __name__ == '__main__':
         if utils.no_task_record("init_service_detail"):
             services.init_svc_detail()
             utils.task_record("init_service_detail")
+
+        if utils.no_task_record("init_service_lb"):
+            lb.init_svc_lb()
+            utils.task_record("init_service_lb")
 
         if utils.no_task_record("init_cm"):
             cm.init_cm()

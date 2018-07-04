@@ -14,9 +14,11 @@ if __name__ == '__main__':
 
     print "begin {}".format("" or "default")
 
-    for i in range(10):
-        time.sleep(2)
-        print i
-        if i == 2:
-            break
-    print "hshhsh"
+    aa = {
+        "key1": 1,
+        "key2": 2
+
+    }
+    print aa
+    del aa["key2"]
+    print aa

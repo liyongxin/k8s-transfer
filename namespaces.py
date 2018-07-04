@@ -1,6 +1,5 @@
 import os
 import json
-import uuid
 import consts
 from utils import utils
 
@@ -77,24 +76,25 @@ def sync_ns_v2():
 
 
 def sync_ns():
-    sqls = []
+    sqls = ""
     sql_tpl = "insert into resources_resource values(nextval('resources_resource_id_seq'::regclass),'NAMESPACE'," \
-              "'{uuid}','{namespace}','{created_by}','2018-06-20 11:50:15','{region_id}:{k8s_ns_name}','region_id'," \
-              "'','{project_uuid}','';)"
+              "'{uuid}','{namespace}','{created_by}','2018-06-20 11:50:15','{region_id}:{k8s_ns_name}','{region_id}'," \
+              "'','{project_uuid}','');\n"
     projects = utils.get_projects()
     for pro in projects:
         name = pro["name"]
-        print "begin sync namespace for project {} ".format(name or "default")
+        print "begin sync namespace for project {} \n".format(name or "default")
         resource_ns = utils.send_request("GET", consts.URLS["get_resource_ns"], specific_project=name)
         for ns in resource_ns:
             k8s_ns_name = "default--" + ns["name"]
-            print "begin build sync sql of namespace for project {} and resource_namespace {}".format(name or "default", k8s_ns_name)
+            print "begin build sync sql of namespace for project {} and resource_namespace {}".format(
+                name or "default", k8s_ns_name)
             k8s_ns = get_k8s_ns_by_name(k8s_ns_name)
             if k8s_ns:
-                sql = sql_tpl.format(uuid=uuid.uuid1(), namespace=consts.Configs["namespace"],
+                sql = sql_tpl.format(uuid=k8s_ns["uid"], namespace=consts.Configs["namespace"],
                                      region_id=utils.get_region_info("id"), created_by=consts.Configs["namespace"],
-                                     k8s_ns_name=k8s_ns_name, project_uuid=k8s_ns["uid"])
-                sqls.append(sql)
+                                     k8s_ns_name=k8s_ns_name, project_uuid=pro["uuid"])
+                sqls += sql
     print sqls
 
 

@@ -135,7 +135,7 @@ def get_svc_env(svc_id):
 
 
 def get_envfile_by_id(file_id):
-    return utils.send_request("GET", consts.URLS["get_envfile"])
+    return utils.send_request("GET", consts.URLS["get_envfile"].format(file_id=file_id))
 
 
 def get_health_check(svc_id):
@@ -412,7 +412,7 @@ def trans_pod_controller(svc):
             "namespace": ""
         },
         "spec": {
-            "maxReplicas": 1,
+            "maxReplicas": svc["target_num_instances"],
             "minReplicas": 1,
             "scaleTargetRef": {
                 "apiVersion": "extensions/v1beta1",
@@ -509,15 +509,30 @@ def get_v1_svc_by_api(svc_id):
 
 
 def get_app_by_api(app_id):
-    return utils.send_request("GET", consts.URLS["get_app_by_id"].format(service_id=app_id))
+    return utils.send_request("GET", consts.URLS["get_app_by_id"].format(app_id=app_id))
 
 
 def update_app(app):
+    kubernetes = app["kubernetes"]
+    for control in kubernetes:
+        if control["apiVersion"] == "extensions/v1beta1":
+            service_id = control["metadata"]["labels"]["service.alauda.io/uuid"]
+            service_name = control["metadata"]["name"]
+            control["metadata"]["labels"]["alauda_service_id"] = service_id
+            control["metadata"]["labels"]["service_name"] = service_name
+            control["spec"]["template"]["metadata"]["labels"]["alauda_service_id"] = service_id
+            control["spec"]["template"]["metadata"]["labels"]["service_name"] = service_name
+            # LabelSelector
+            control["spec"]["selector"] = {
+                "matchLabels": {
+                    "service.alauda.io/uuid": service_id
+                }
+            }
     data = {
         "namespace": app["cluster"]["name"],
-        "kubernetes": app["kubernetes"]
+        "kubernetes": kubernetes
     }
-    utils.send_request("PATCH", consts.URLS["get_app_by_id"].format(service_id=app["resource"]["uuid"]), data)
+    utils.send_request("PATCH", consts.URLS["get_app_by_id"].format(app_id=app["resource"]["uuid"]), data)
 
 
 def main():

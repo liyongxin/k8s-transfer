@@ -10,7 +10,7 @@ def init_lb_list():
     lb_list = utils.send_request("GET", consts.URLS["get_lb"])
     for lb in lb_list:
         # lb_ft = get_lb_frontends(lb["name"])
-        filename = utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + lb["name"]
+        filename = utils.get_default_folder() + consts.Prefix["lb_name_prefix"] + lb["name"]
         utils.file_writer(filename, lb)
 
 
@@ -134,7 +134,7 @@ def main():
 def handle_lb_for_svc(svc_name):
     print "\nbegin handle lb bindings for svc {}".format(svc_name)
     svc_lb_data = get_svc_lb(svc_name)
-    for lb_data in svc_lb_data["result"]:
+    for lb_data in svc_lb_data:
         lb_name = lb_data["name"]
         for frontend in lb_data["frontends"]:
             port = frontend["port"]

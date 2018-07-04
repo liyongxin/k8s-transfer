@@ -1,8 +1,8 @@
 
 Configs = {
-    "api_url": "http://40.83.73.194:20081",
-    "token": "06b92f316be5462f486819ba947f931d4c9e59fc",
-    "region_name": "global",
+    "api_url": "http://140.143.10.131:20081",
+    "token": "75f99be461c38fe04376bdc155a0b443231fe498",
+    "region_name": "lbx2",
     "namespace": "alauda"
 }
 
@@ -38,7 +38,7 @@ URLS = {
         namespace=Configs['namespace'], region_name=Configs['region_name']),
     "get_svc_v2": "/v2/services/?cluster={region_name}&name={service_name}".format(
         region_name=Configs['region_name'], service_name="{service_name}"),
-    "get_svc_v2_instances": "v2/services/{service_id}/instances".format(service_id="{service_id}"),
+    "get_svc_v2_instances": "/v2/services/{service_id}/instances".format(service_id="{service_id}"),
     "get_svc_by_id_v2": "/v2/services/{service_id}",
     "get_app_by_id": "/v2/apps/{app_id}",
     "get_subnets": "/v1/subnets/{namespace}?region_name={region_name}".format(
@@ -64,7 +64,7 @@ URLS = {
     "get_all_pipelines": "/v1/pipelines/{namespace}/config?page_size=100".format(namespace=Configs['namespace']),
     "get_or_update_pipeline": "/v1/pipelines/{namespace}/config/{pipeline_id}".format(
         namespace=Configs['namespace'], pipeline_id="{pipeline_id}"),
-    "get_envfile": "v1/env-files/{namespace}/{file_id}".format(namespace=Configs['namespace'], file_id="{file_id}")
+    "get_envfile": "/v1/env-files/{namespace}/{file_id}".format(namespace=Configs['namespace'], file_id="{file_id}")
 }
 # kubectl get
 GET_ALL_NS = "kubectl get ns --no-headers -o=custom-columns=NAME:.metadata.name"

@@ -53,7 +53,7 @@ def send_request(method, url, params=None, specific_project=None):
             elif isinstance(response, dict) and "errors" in response:
                 print response["errors"][0]["message"]
                 writer = open("error_urls", "a+")
-                writer.write("\n\nresponse="+str(response)+"\nurl="+req_url+"\nparams="+str(params)+"\n\n")
+                writer.write("\n\nERROR!!!!!! response="+str(response)+"\nurl="+req_url+"\nparams="+str(params)+"\n\n")
                 writer.close()
                 return False
                 # raise Exception(res["errors"][0]["message"])
@@ -76,9 +76,12 @@ def get_region_info(key=None):
 
 def get_projects():
     projects = send_request("GET", consts.URLS["get_projects"])
-
+    default_project = {
+        "name": "",
+        "uuid": ""
+    }
     # add default project(no project)
-    projects.append({"name": ""})
+    projects.append(default_project)
     return projects
 
 
