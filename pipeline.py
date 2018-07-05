@@ -83,8 +83,11 @@ def trans_manual_control_task(task_data):
     transed_data = copy.deepcopy(task_data)
     link = task_data["link"]
     service_name = link["name"]
-    new_svc = services.get_new_svc_by_name(service_name)[0]
-
+    new_svc_res = services.get_new_svc_by_name(service_name)
+    if len(new_svc_res) == 0:
+        print "ERROR: find no svc for pipeline update ,will skip"
+        return task_data
+    new_svc = new_svc_res[0]
     transed_data["link"] = {
         "name": service_name,
         "type": "application-service",
@@ -122,7 +125,11 @@ def trans_exec_task(task_data):
     transed_data = copy.deepcopy(task_data)
     link = transed_data["link"]
     service_name = link["name"]
-    new_svc = services.get_new_svc_by_name(service_name)[0]
+    new_svc_res = services.get_new_svc_by_name(service_name)
+    if len(new_svc_res) == 0:
+        print "ERROR: find no svc for pipeline update ,will skip"
+        return task_data
+    new_svc = new_svc_res[0]
     transed_data["link"] = {
         "name": service_name,
         "type": "application-service",
@@ -172,15 +179,19 @@ def trans_update_service_task(task_data):
     transed_data = copy.deepcopy(task_data)
     service = task_data["service"]
     service_name = service["name"]
-    new_svc = services.get_new_svc_by_name(service_name)[0]
+    new_svc_res = services.get_new_svc_by_name(service_name)
+    if len(new_svc_res) == 0:
+        print "ERROR: find no svc for pipeline update ,will skip"
+        return task_data
+    new_svc = new_svc_res[0]
     transed_data["env_files"] = []
     transed_data["mount_points"] = []
     transed_data["env_vars"] = {}
-    transed_data["automatic_rollback"] = "true"
+    transed_data["automatic_rollback"] = True
 
     transed_data["service"] = {
         "name": service_name,
-        "is_new": "true",
+        "is_new": True,
         "type": "application-service",
         "uuid": new_svc["resource"]["uuid"],
         "parent": new_svc["parent"]["name"],
@@ -190,7 +201,7 @@ def trans_update_service_task(task_data):
         "containers": [
             {
                 "name": service_name + "-0",
-                "use_image_in_trigger": "true",
+                "use_image_in_trigger": True,
                 "env": get_svc_env(task_data)
             }
         ]

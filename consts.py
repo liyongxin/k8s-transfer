@@ -3,7 +3,8 @@ Configs = {
     "api_url": "http://140.143.10.131:20081",
     "token": "75f99be461c38fe04376bdc155a0b443231fe498",
     "region_name": "lbx2",
-    "namespace": "alauda"
+    "namespace": "alauda",
+    "db_engine": "mysql"  # mysql or postgres
 }
 
 Prefix = {

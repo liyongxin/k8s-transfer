@@ -572,7 +572,7 @@ def main():
             app_info = create_app(app_data)
             # print app_info
             print "\nwaiting new app {} for create ".format(service_name)
-            for count in range(20):
+            for count in range(50):
                 time.sleep(3)
                 app = get_app_by_api(app_info["resource"]["uuid"])
                 app_current_state = app["resource"]["status"]
@@ -581,11 +581,13 @@ def main():
                     break
                 else:
                     print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
+            print "app update too slow , please check!"
+            exit(1)
             # begin update app for bind old tag
             app = get_app_by_api(app_info["resource"]["uuid"])
             update_app(app)
             print "\nwaiting app {} for update ".format(service_name)
-            for count in range(20):
+            for count in range(50):
                 time.sleep(3)
                 app = get_app_by_api(app_info["resource"]["uuid"])
                 app_current_state = app["resource"]["status"]
@@ -594,6 +596,8 @@ def main():
                     break
                 else:
                     print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
+            print "app update too slow , please check!"
+            exit(1)
             # handle lb binding
             lb.handle_lb_for_svc(service_name)
             # if service_status == "Stopped":

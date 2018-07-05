@@ -10,7 +10,7 @@ def init_lb_list():
     lb_list = utils.send_request("GET", consts.URLS["get_lb"])
     for lb in lb_list:
         # lb_ft = get_lb_frontends(lb["name"])
-        filename = utils.get_default_folder() + consts.Prefix["lb_name_prefix"] + lb["name"]
+        filename = utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + lb["name"]
         utils.file_writer(filename, lb)
 
 
