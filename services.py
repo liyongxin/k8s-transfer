@@ -570,34 +570,41 @@ def main():
 
             print "\nbegin create app for service {} ".format(service_name)
             app_info = create_app(app_data)
-            # print app_info
-            print "\nwaiting new app {} for create ".format(service_name)
-            for count in range(50):
-                time.sleep(3)
+            if consts.Configs["use_lb"]:
+                # print app_info
+                print "\nwaiting new app {} for create ".format(service_name)
+                create_done = False
+                for count in range(50):
+                    time.sleep(3)
+                    app = get_app_by_api(app_info["resource"]["uuid"])
+                    app_current_state = app["resource"]["status"]
+                    if app_current_state == "Running":
+                        print "\n app {} create done".format(service_name)
+                        create_done = True
+                        break
+                    else:
+                        print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
+                if not create_done:
+                    print "app update too slow , please check!"
+                    exit(1)
+                # begin update app for bind old tag
                 app = get_app_by_api(app_info["resource"]["uuid"])
-                app_current_state = app["resource"]["status"]
-                if app_current_state == "Running":
-                    print "\n app {} create done".format(service_name)
-                    break
-                else:
-                    print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
-            print "app update too slow , please check!"
-            exit(1)
-            # begin update app for bind old tag
-            app = get_app_by_api(app_info["resource"]["uuid"])
-            update_app(app)
-            print "\nwaiting app {} for update ".format(service_name)
-            for count in range(50):
-                time.sleep(3)
-                app = get_app_by_api(app_info["resource"]["uuid"])
-                app_current_state = app["resource"]["status"]
-                if app_current_state == "Running":
-                    print "\n app {} update done".format(service_name)
-                    break
-                else:
-                    print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
-            print "app update too slow , please check!"
-            exit(1)
+                update_done = False
+                update_app(app)
+                print "\nwaiting app {} for update ".format(service_name)
+                for count in range(50):
+                    time.sleep(3)
+                    app = get_app_by_api(app_info["resource"]["uuid"])
+                    app_current_state = app["resource"]["status"]
+                    if app_current_state == "Running":
+                        print "\n app {} update done".format(service_name)
+                        update_done = True
+                        break
+                    else:
+                        print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
+                if not update_done:
+                    print "app update too slow , please check!"
+                    exit(1)
             # handle lb binding
             lb.handle_lb_for_svc(service_name)
             # if service_status == "Stopped":
