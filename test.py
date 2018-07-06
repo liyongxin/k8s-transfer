@@ -14,11 +14,7 @@ if __name__ == '__main__':
 
     print "begin {}".format("" or "default")
 
-    aa = {
-        "key1": 1,
-        "key2": 2
-
-    }
-    print aa
-    del aa["key2"]
-    print aa
+    print "SBss-dd123".lower()
+    aaa=[]
+    aaa.append(1)
+    print aaa or "123"

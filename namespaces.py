@@ -82,7 +82,7 @@ def sync_ns():
               "'','{project_uuid}','');\n"
     if consts.Configs["db_engine"] == "mysql":
         sql_tpl = "insert into resources_resource(`type`,`uuid`,`namespace`,`created_by`,`created_at`,`name`,`region_id`," \
-                  "`space_uuid,`project_uuid`,`namespace_uuid`) values('NAMESPACE','{uuid}','{namespace}','{created_by}'," \
+                  "`space_uuid`,`project_uuid`,`namespace_uuid`) values('NAMESPACE','{uuid}','{namespace}','{created_by}'," \
                   "'2018-06-20 11:50:15','{region_id}:{k8s_ns_name}','{region_id}','','{project_uuid}','');\n"
 
     projects = utils.get_projects()

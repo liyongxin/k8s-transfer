@@ -61,10 +61,16 @@ def get_new_svc_by_name(svc_name):
     project_name = project.get_project_by_svc_name(svc_name)
     print "find svc {} was in project {}".format(svc_name, project_name)
     data = utils.send_request('GET', url, specific_project=project_name)
-    if data["count"] != 1:
+    result = []
+    if data["count"] > 1:
+        for svc in data["results"]:
+            if svc["resource"]["name"] == svc_name:
+                result.append(svc)
+                break
+    if data["count"] == 0:
         print "Attention!!! not found new svc named {}".format(svc_name)
     #    raise Exception("find {count} instances for {svc_name} ".format(count=data["count"], svc_name=svc_name))
-    return data["results"]
+    return result or data["result"]
 
 
 def get_svc_labels(svc_id):
@@ -327,6 +333,15 @@ def get_instance_ips(instances):
     return ",".join(ips)
 
 
+def get_limits_requests(svc):
+    memory = int(svc["custom_instance_size"]["mem"]) * consts.Configs["ratio_mem"]
+    cpu = int(svc["custom_instance_size"]["cpu"]) * consts.Configs["ratio_cpu"]
+    return {
+        "memory": str(memory) + "M",
+        "cpu": cpu
+    }
+
+
 def trans_pod_controller(svc):
     kubernetes_attr = []
     service_name = svc["service_name"]
@@ -350,14 +365,8 @@ def trans_pod_controller(svc):
                             "image": svc["image_name"] + ":" + svc["image_tag"],
                             "imagePullPolicy": "Always",
                             "resources": {
-                                "requests": {
-                                    "memory": str(svc["custom_instance_size"]["mem"]) + "M",
-                                    "cpu": svc["custom_instance_size"]["cpu"]
-                                },
-                                "limits": {
-                                    "memory": str(svc["custom_instance_size"]["mem"]) + "M",
-                                    "cpu": svc["custom_instance_size"]["cpu"]
-                                }
+                                "requests": get_limits_requests(svc),
+                                "limits": get_limits_requests(svc)
                             },
                             "env": get_svc_env(svc["uuid"]),
                             # "livenessProbe": get_health_check(svc["uuid"]),
@@ -383,7 +392,7 @@ def trans_pod_controller(svc):
     # todo
     if svc["network_mode"] == "MACVLAN" and svc["subnet_id"]:
         print "\nbegin handle macvlan subnet"
-        subnet_name = get_subnet_by_id(svc["subnet_id"])
+        subnet_name = get_subnet_by_id(svc["subnet_id"]).lower()
         print "get subnet name {} for subnet_id {}".format(subnet_name, svc["subnet_id"])
         k8s_controller["spec"]["template"]["metadata"]["annotations"] = {
                 "subnet.alauda.io/name": subnet_name,
