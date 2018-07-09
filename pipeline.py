@@ -28,11 +28,12 @@ def init_pipeline():
     cache_task_types = ["update-service", "exec", "manual-control", ""]
     for pl in all_pips:
         pipeline = get_pipeline_detail(pl["uuid"])
-        tasks = pipeline["stages"][0]["tasks"]
-        for task in tasks:
-            if task["type"] in cache_task_types:
-                cache_pl_file = utils.get_current_folder() + consts.Prefix["pipeline_name_prefix"] + pipeline["name"]
-                utils.file_writer(cache_pl_file, pipeline)
+        if "tasks" in pipeline["stages"][0]:
+            tasks = pipeline["stages"][0]["tasks"]
+            for task in tasks:
+                if task["type"] in cache_task_types:
+                    cache_pl_file = utils.get_current_folder() + consts.Prefix["pipeline_name_prefix"] + pipeline["name"]
+                    utils.file_writer(cache_pl_file, pipeline)
 
 
 def trans_pipeline(pipeline):
@@ -124,7 +125,7 @@ def trans_test_container_task(task_data):
 def trans_exec_task(task_data):
     transed_data = copy.deepcopy(task_data)
     link = transed_data["link"]
-    service_name = link["name"]
+    service_name = link["name"].lower()
     new_svc_res = services.get_new_svc_by_name(service_name)
     if len(new_svc_res) == 0:
         print "ERROR: find no svc for pipeline update ,will skip"
@@ -178,7 +179,7 @@ def get_svc_env(task_data):
 def trans_update_service_task(task_data):
     transed_data = copy.deepcopy(task_data)
     service = task_data["service"]
-    service_name = service["name"]
+    service_name = service["name"].lower()
     new_svc_res = services.get_new_svc_by_name(service_name)
     if len(new_svc_res) == 0:
         print "ERROR: find no svc for pipeline update ,will skip"
@@ -197,7 +198,7 @@ def trans_update_service_task(task_data):
         "parent": new_svc["parent"]["name"],
         "parent_uuid": new_svc["parent"]["uuid"],
         "namespace": new_svc["namespace"]["name"],
-        "triggerImage": service["triggerImage"],
+        # "triggerImage": service["triggerImage"],
         "containers": [
             {
                 "name": service_name + "-0",

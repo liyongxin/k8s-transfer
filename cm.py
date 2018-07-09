@@ -9,7 +9,7 @@ from utils import utils
 def create_cm_v1():
     svc_list = services.get_service_list()
     for svc in svc_list:
-        cm_file_name = consts.Prefix["cm_name_prefix"] + svc["service_name"]
+        cm_file_name = consts.Prefix["cm_name_prefix"] + svc["service_name"].lower()
         if not os.path.exists(cm_file_name):
             print "ERROR:cm file {} doesn't exists!".format(cm_file_name)
             continue
@@ -89,7 +89,7 @@ def init_cm():
     svc_list = services.get_service_list()
     for svc in svc_list:
         svc_detail = services.get_service_detail(svc["uuid"])
-        svc_name = svc_detail["service_name"]
+        svc_name = svc_detail["service_name"].lower()
         mount_points = svc_detail["mount_points"]
         cm_data = {}
         for mp in mount_points:

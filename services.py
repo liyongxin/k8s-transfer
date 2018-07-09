@@ -5,6 +5,7 @@ import namespaces
 import project
 import lb
 from os import path
+from decimal import *
 from utils import utils
 
 
@@ -38,7 +39,7 @@ def init_svc_detail():
 
 def get_service_detail(svc_id_or_name):
     svc_detail = {}
-    file_name = utils.get_current_folder() + consts.Prefix["service_detail_file"] + svc_id_or_name
+    file_name = utils.get_current_folder() + consts.Prefix["service_detail_file"] + svc_id_or_name.lower()
     if path.exists(file_name):
         svc_detail = utils.file_reader(file_name)
     else:
@@ -70,13 +71,13 @@ def get_new_svc_by_name(svc_name):
     if data["count"] == 0:
         print "Attention!!! not found new svc named {}".format(svc_name)
     #    raise Exception("find {count} instances for {svc_name} ".format(count=data["count"], svc_name=svc_name))
-    return result or data["result"]
+    return result or data["results"]
 
 
 def get_svc_labels(svc_id):
     svc_detail = get_service_detail(svc_id)
     lables = {
-        "service.alauda.io/name": svc_detail["service_name"],
+        "service.alauda.io/name": svc_detail["service_name"].lower(),
     }
     for lable in svc_detail["labels"]:
         lables[lable["key"]] = lable["value"]
@@ -173,7 +174,7 @@ def get_create_method(svc_id):
 def get_volume_mounts(svc_id):
     svc = get_service_detail(svc_id)
     mount_points = svc["mount_points"]
-    svc_name = svc["service_name"]
+    svc_name = svc["service_name"].lower()
     volume_mounts = []
     volumes = []
     index = 0
@@ -329,22 +330,56 @@ def get_instance_ips(instances):
         if instance["container_ip"]:
             ips.append(instance["container_ip"])
         else:
-            raise Exception("find no container ip for macvlan svc !! break!!")
+            print "find no container ip for macvlan svc !! break!!"
     return ",".join(ips)
 
 
 def get_limits_requests(svc):
-    memory = int(svc["custom_instance_size"]["mem"]) * consts.Configs["ratio_mem"]
-    cpu = int(svc["custom_instance_size"]["cpu"]) * consts.Configs["ratio_cpu"]
+    region_features = utils.get_region_info("features")
+    docker_resource_ratio = region_features["service"]["manager"]["docker_resource_ratio"]
+    memory = round(Decimal(svc["custom_instance_size"]["mem"]) / Decimal(docker_resource_ratio["mem"]), 4)
+    cpu = round(Decimal(svc["custom_instance_size"]["cpu"]) / Decimal(docker_resource_ratio["cpu"]), 4)
     return {
         "memory": str(memory) + "M",
         "cpu": cpu
     }
 
 
+def get_run_command(svc):
+    result = {
+        "command": [],
+        "args": []
+    }
+    entrypoint = svc["entrypoint"]
+    run_command = svc["run_command"]
+    if entrypoint:
+        if entrypoint.startswith("[") and entrypoint.endswith("]"):
+            entry = json.loads(entrypoint)
+            result["command"] = entry
+        else:
+            result["command"].append(entrypoint)
+        if run_command:
+            if run_command.startswith("[") and run_command.endswith("]"):
+                run_command = json.loads(run_command)
+                result["args"] = run_command
+            else:
+                result["args"].append(run_command)
+    else:
+        if run_command:
+            if run_command.startswith("[") and run_command.endswith("]"):
+                run_command = json.loads(run_command)
+                result["command"] = run_command
+            else:
+                result["command"].append(run_command)
+    return result
+
+
 def trans_pod_controller(svc):
     kubernetes_attr = []
-    service_name = svc["service_name"]
+    service_name = svc["service_name"].lower()
+    replicas = svc["target_num_instances"]
+    # if svc["current_status"] != "Running":
+    #    replicas = 0
     k8s_controller = {
         "apiVersion": "extensions/v1beta1",
         "kind": svc["pod_controller"],
@@ -366,7 +401,10 @@ def trans_pod_controller(svc):
                             "imagePullPolicy": "Always",
                             "resources": {
                                 "requests": get_limits_requests(svc),
-                                "limits": get_limits_requests(svc)
+                                "limits": {
+                                    "memory": str(svc["custom_instance_size"]["mem"]) + "M",
+                                    "cpu": svc["custom_instance_size"]["cpu"]
+                                }
                             },
                             "env": get_svc_env(svc["uuid"]),
                             # "livenessProbe": get_health_check(svc["uuid"]),
@@ -378,7 +416,7 @@ def trans_pod_controller(svc):
                     "volumes": get_volume_mounts(svc["uuid"])["volumes"]
                 }
             },
-            "replicas": svc["target_num_instances"],
+            "replicas": replicas,
             "strategy": {
                 "type": "RollingUpdate",
                 "rollingUpdate": {
@@ -390,23 +428,24 @@ def trans_pod_controller(svc):
     }
     # handle macvlan annotations, subnet_id
     # todo
-    if svc["network_mode"] == "MACVLAN" and svc["subnet_id"]:
+    if svc["network_mode"] == "MACVLAN" and svc["subnet_id"] and svc["current_status"] == "Running":
         print "\nbegin handle macvlan subnet"
         subnet_name = get_subnet_by_id(svc["subnet_id"]).lower()
         print "get subnet name {} for subnet_id {}".format(subnet_name, svc["subnet_id"])
+        ips = get_instance_ips(svc["instances"])
         k8s_controller["spec"]["template"]["metadata"]["annotations"] = {
-                "subnet.alauda.io/name": subnet_name,
-                "subnet.alauda.io/ipAddrs": get_instance_ips(svc["instances"])  # "192.168.10.100,192.168.10.111"
+                "subnet.alauda.io/name": subnet_name
             }
+        if ips:
+            k8s_controller["spec"]["template"]["metadata"]["annotations"]["subnet.alauda.io/ipAddrs"] = ips
 
     # handle self command
-    if svc["entrypoint"] and svc["run_command"]:
-        k8s_controller["spec"]["template"]["spec"]["containers"][0]["args"] = [
-            svc["run_command"]
-        ]
-        k8s_controller["spec"]["template"]["spec"]["containers"][0]["command"] = [
-            svc["entrypoint"]
-        ]
+    run_commands = get_run_command(svc)
+    if run_commands["command"]:
+        k8s_controller["spec"]["template"]["spec"]["containers"][0]["command"] = run_commands["command"]
+    if run_commands["args"]:
+        k8s_controller["spec"]["template"]["spec"]["containers"][0]["args"] = run_commands["args"]
+
     if "health_checks" in svc and len(svc["health_checks"]) > 0:
         k8s_controller["spec"]["template"]["spec"]["containers"][0]["livenessProbe"] = get_health_check(svc["uuid"])
 
@@ -425,7 +464,7 @@ def trans_pod_controller(svc):
             "minReplicas": 1,
             "scaleTargetRef": {
                 "apiVersion": "extensions/v1beta1",
-                "kind": "Deployment",
+                "kind": svc["pod_controller"],
                 "name": service_name
             }
         }
@@ -462,7 +501,7 @@ def trans_pod_controller(svc):
                     },
                     "spec": {
                         "selector": {
-                            "service.alauda.io/name": svc["service_name"]
+                            "service.alauda.io/name": svc["service_name"].lower()
                         },
                         # old svc one service item can only add one nodeport
                         "ports": [{
@@ -489,7 +528,7 @@ def trans_svc_data(svc):
     if svc["app_name"]:
         app_data["resource"]["name"] = svc["app_name"]
     else:
-        app_data["resource"]["name"] = consts.Prefix["app_name_prefix"] + svc["service_name"]
+        app_data["resource"]["name"] = consts.Prefix["app_name_prefix"] + svc["service_name"].lower()
 
     app_data["namespace"] = {
         "name": svc["service_namespace"],
@@ -526,7 +565,7 @@ def update_app(app):
     for control in kubernetes:
         if control["apiVersion"] == "extensions/v1beta1":
             service_id = control["metadata"]["labels"]["service.alauda.io/uuid"]
-            service_name = control["metadata"]["name"]
+            service_name = control["metadata"]["name"].lower()
             control["metadata"]["labels"]["alauda_service_id"] = service_id
             control["metadata"]["labels"]["service_name"] = service_name
             control["spec"]["template"]["metadata"]["labels"]["alauda_service_id"] = service_id
@@ -547,7 +586,7 @@ def update_app(app):
 def main():
     svc_list = get_service_list()
     for svc in svc_list:
-        service_name = svc["service_name"]
+        service_name = svc["service_name"].lower()
         service_status = svc["current_status"]
 
         task_single_svc = "trans_svc_{svc_id}_{svc_name}".format(svc_id=svc["uuid"], svc_name=service_name)

@@ -4,10 +4,8 @@ Configs = {
     "token": "75f99be461c38fe04376bdc155a0b443231fe498",
     "region_name": "lbx2",
     "namespace": "alauda",
-    "db_engine": "mysql",  # mysql or postgres
-    "use_lb": False,  # not update app if False
-    "ratio_cpu": 4,
-    "ratio_mem": 2
+    "db_engine": "postgres",  # mysql or postgres
+    "use_lb": True  # True: handle lb bindings
 }
 
 Prefix = {

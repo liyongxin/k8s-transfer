@@ -20,7 +20,7 @@ def init_svc_lb():
     for svc in svc_list:
         url = get_lb_url + "&service_id=" + svc["uuid"]
         svc_lb_data = utils.send_request("GET", url)
-        filename = utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + svc["service_name"]
+        filename = utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + svc["service_name"].lower()
         utils.file_writer(filename, svc_lb_data)
 
 
@@ -54,7 +54,7 @@ def create_frontend(lb_name, frontend):
         # "space_name": frontend["space_name"]
     }
     if frontend["service_id"] and frontend["service_name"]:
-        new_svcs = services.get_new_svc_by_name(frontend["service_name"])
+        new_svcs = services.get_new_svc_by_name(frontend["service_name"].lower())
         data["service_id"] = new_svcs[0]["resource"]["uuid"]
 
     utils.send_request("POST", consts.URLS["lb_frontends"].format(lb_name=lb_name), data)
@@ -73,7 +73,7 @@ def bind_rule_svc(lb_name, port, rule_id, service_list):
     data = []
     for service in service_list:
         if service["service_id"] and service["service_name"]:
-            service_name = service["service_name"]
+            service_name = service["service_name"].lower()
             new_services = services.get_new_svc_by_name(service_name)
             if len(new_services) == 0:
                 print "find new service failed because no service named {}, will skipped for lb {} and port {}".format(service_name, lb_name, port)
@@ -134,6 +134,8 @@ def main():
 def handle_lb_for_svc(svc_name):
     print "\nbegin handle lb bindings for svc {}".format(svc_name)
     svc_lb_data = get_svc_lb(svc_name)
+    if not isinstance(svc_lb_data, list):
+        return
     for lb_data in svc_lb_data:
         lb_name = lb_data["name"]
         for frontend in lb_data["frontends"]:

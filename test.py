@@ -1,4 +1,6 @@
 import time
+import json
+from decimal import *
 
 if __name__ == '__main__':
     url = "www.ddd.com/?aaa=1&b=2"
@@ -7,14 +9,14 @@ if __name__ == '__main__':
     else:
         print url + "?project_name=alauda"
 
-    ips = []
-    ips.append("aaa")
-    ips.append("vvv")
-    print ",".join(ips)
-
-    print "begin {}".format("" or "default")
-
-    print "SBss-dd123".lower()
-    aaa=[]
-    aaa.append(1)
-    print aaa or "123"
+    aaa = Decimal(0.125)/Decimal('3')
+    aaa = 2043
+    c = round(aaa, 4)
+    print type(c)
+    print float(aaa)
+    print type(aaa)
+    print str(aaa)
+    ste = "[\"bin\", \"sh\"]"
+    if ste.startswith("[") and ste.endswith("]"):
+        arr = json.loads(ste)
+    print arr[0]
