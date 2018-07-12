@@ -43,7 +43,7 @@ IncludeAppStatus = [
 URLS = {
     "get_region": "/v1/regions/{namespace}/{region_name}".format(
         namespace=Configs['namespace'], region_name=Configs['region_name']),
-    "create_get_ns": "/v2/namespaces/",
+    "create_get_ns": "/v2/kubernetes/clusters/{region_name}/namespaces".format(region_name=Configs['region_name']),
     "get_resource_ns": "/v1/spaces/{namespace}/".format(
         namespace=Configs['namespace']),
     "get_projects": "/v1/projects/{namespace}/".format(namespace=Configs['namespace']),
@@ -63,7 +63,7 @@ URLS = {
         namespace=Configs['namespace'], app_id="{app_id}"),
     "get_config_content": "/v1/configs/{namespace}/{filename}".format(
         namespace=Configs['namespace'], filename="{filename}"),
-    "create_cm": "/v2/configmaps/",
+    "create_cm": "/v2/kubernetes/clusters/{region_name}/configmaps/".format(region_name=Configs['region_name']),
     "create_app": "/v2/apps",
     "stop_app": "/v2/apps/{app_id}/stop",
     "get_lb": "/v1/load_balancers/{namespace}?region_name={region_name}&frontend=true".format(

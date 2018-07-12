@@ -27,14 +27,14 @@ def get_k8s_ns_by_name(k8s_ns_name):
 
 
 def get_alauda_namespaces():
-    ns = utils.send_request("GET", consts.URLS["create_get_ns"] + "?page=1&page_size=100&cluster=" + consts.Configs["region_name"])
+    ns = utils.send_request("GET", consts.URLS["create_get_ns"] + "?page=1&page_size=100")
     return ns["results"]
 
 
 def get_alauda_ns_by_name(ns_name):
     ns_list = get_alauda_namespaces()
     for ns in ns_list:
-        resource = ns["resource"]
+        resource = ns["kubernetes"]["metadata"]
         print resource
         if resource["name"] == ns_name:
             return resource
@@ -42,16 +42,13 @@ def get_alauda_ns_by_name(ns_name):
 
 
 def sync_ns_v1():
-    region_id = utils.get_region_info("id")
     k8_ns = get_k8s_namespaces()
     for ns in k8_ns:
         req_params = {
-            "cluster": {
-                "uuid": region_id,
-                "name": consts.Configs["region_name"]
-            },
-            "resource": {
-                "name": ns['metadata']['name']
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "name": ns["name"]
             }
         }
         print "begin sync namespace {} from k8s to alauda metadata".format(ns['metadata']['name'])
@@ -59,15 +56,12 @@ def sync_ns_v1():
 
 
 def sync_ns_v2():
-    region_id = utils.get_region_info("id")
     resource_ns = utils.send_request("GET", consts.URLS["get_resource_ns"])
     for ns in resource_ns:
         req_params = {
-            "cluster": {
-                "uuid": region_id,
-                "name": consts.Configs["region_name"]
-            },
-            "resource": {
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
                 "name": ns["name"]
             }
         }

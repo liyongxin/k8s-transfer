@@ -20,25 +20,14 @@ def create_cm():
             service_name = filename.replace(consts.Prefix["cm_name_prefix"], "")
             svc_detail = services.get_service_detail(service_name)
             data = {
-                "resource": {
+                "apiVersion": "v1",
+                "kind": "ConfigMap",
+                "metadata": {
+                    "annotations": {},
+                    "namespace": svc_detail["space_name"],
                     "name": filename.replace("_", "-")
                 },
-                "namespace": {
-                    "uuid": namespaces.get_alauda_ns_by_name(svc_detail["space_name"])["uuid"],
-                    "name": svc_detail["space_name"],
-                },
-                "cluster": {
-                    "name": svc_detail["region_name"],
-                    "uuid": svc_detail["region_uuid"]
-                },
-                "kubernetes": {
-                    "apiVersion": "v1",
-                    "kind": "ConfigMap",
-                    "metadata": {
-                        "name": filename.replace("_", "-")
-                    },
-                    "data": cm_data
-                }
+                "data": cm_data
             }
             print "begin create configMap for {}".format(current_folder + filename)
             utils.send_request("POST", consts.URLS["create_cm"], data)
