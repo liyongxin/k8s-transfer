@@ -5,6 +5,7 @@ import namespaces
 import project
 import consts
 import pipeline
+import applications
 from utils import utils
 
 if __name__ == '__main__':
@@ -25,10 +26,10 @@ if __name__ == '__main__':
 
     # build sql for table jakiro.resources_resource, should be executed by hands
     if utils.no_common_task_record("sync_namespace"):
-        namespaces.sync_ns()
-        print "Please execute sql for jakiro db by hands;\n"
+        namespaces.sync_ns_v2()
+        # print "Please execute sql for jakiro db by hands;\n"
         utils.task_common_record("sync_namespace")
-        exit(1)
+        # exit(1)
 
     # init lb info
     if utils.no_common_task_record("init_lb_list"):
@@ -51,6 +52,17 @@ if __name__ == '__main__':
             lb.init_svc_lb()
             utils.task_record("init_service_lb")
 
+        if utils.no_task_record("init_applications"):
+            applications.init_app_list()
+            utils.task_record("init_applications")
+        if utils.no_task_record("init_application_detail"):
+            applications.init_app_svc_detail()
+            utils.task_record("init_application_detail")
+
+        if utils.no_task_record("init_applications_service_lb"):
+            lb.init_app_svc_lb()
+            utils.task_record("init_applications_service_lb")
+
         if utils.no_task_record("init_cm"):
             cm.init_cm()
             utils.task_record("init_cm")
@@ -60,5 +72,6 @@ if __name__ == '__main__':
             utils.task_record("create_cm")
         # service trans
         services.main()
+        applications.main()
         pipeline.main()
 

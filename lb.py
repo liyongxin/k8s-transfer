@@ -3,6 +3,7 @@ import json
 import copy
 import consts
 import services
+import applications
 from utils import utils
 
 
@@ -24,6 +25,17 @@ def init_svc_lb():
         utils.file_writer(filename, svc_lb_data)
 
 
+def init_app_svc_lb():
+    app_list = applications.get_app_list()
+    get_lb_url = consts.URLS["get_lb"]
+    for app in app_list:
+        for app_svc in app["services"]:
+            url = get_lb_url + "&service_id=" + app_svc["uuid"]
+            svc_lb_data = utils.send_request("GET", url)
+            filename = utils.get_current_folder() + consts.Prefix["lb_name_prefix"] + app_svc["service_name"].lower()
+            utils.file_writer(filename, svc_lb_data)
+
+
 def get_lb(lb_file):
     return utils.file_reader(utils.get_current_folder() + lb_file)
 
@@ -38,6 +50,19 @@ def get_lb_frontends(lb_name):
     print "lb frontends for {}".format(lb_name)
     print lb_ft
     return lb_ft
+
+
+def delete_tcp_frontend(lb_name, port):
+    url = consts.URLS["lb_create_listener"].format(lb_name_or_id=lb_name, port=port)
+    utils.send_request("DELETE", url)
+
+
+def check_frontend_used(lb_name, port):
+    frontends = get_lb_frontends(lb_name)
+    for frontend in frontends["data"]:
+        if frontend["port"] == port and frontend["protocol"] == "tcp":
+            print "find tcp frontend for port {} not deleted, will be deleted first".format(port)
+            delete_tcp_frontend(lb_name, port)
 
 
 def create_frontend(lb_name, frontend):
@@ -109,6 +134,9 @@ def main():
             for frontend in lb_datas["frontends"]:
                 port = frontend["port"]
                 if utils.no_task_record(lb_file + "_frontend_" + str(port)):
+                    if frontend["protocol"] == "tcp":
+                        print "begin check if frontend had been used "
+                        check_frontend_used(lb_name, port)
                     print "begin create frontend for  lb {} and port {}".format(lb_name, port)
                     create_frontend(lb_name, frontend)
                     utils.task_record(lb_file + "_frontend_" + str(port))
@@ -119,8 +147,8 @@ def main():
                 rules = frontend["rules"]
                 for rule in rules:
                     if utils.no_task_record(lb_file + "_frontend_" + str(port) + "_rule_" + rule["rule_id"]):
-                        if rule["type"] == "system":
-                            continue
+                        # if rule["type"] == "system":
+                        #    continue
                         print "\nbegin create rule for domain {} and port {}".format(rule["domain"], port)
                         rule_info = create_rule(lb_name, port, copy.deepcopy(rule))
                         # record rule create task
@@ -142,6 +170,9 @@ def handle_lb_for_svc(svc_name):
             port = frontend["port"]
             frontend_task = lb_name + "_frontend_" + str(port)
             if utils.no_task_record(frontend_task):
+                if frontend["protocol"] == "tcp":
+                    print "begin check if frontend had been used "
+                    check_frontend_used(lb_name, port)
                 print "begin create frontend for  lb {} and port {}".format(lb_name, port)
                 create_frontend(lb_name, frontend)
                 utils.task_record(frontend_task)

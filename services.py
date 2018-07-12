@@ -26,15 +26,21 @@ def init_svc_list():
     utils.file_writer(file_name, svc_list)
 
 
+def svc_detail_handler(svc):
+    current_folder = utils.get_current_project()
+    prefix = consts.Prefix["app_service_detail_file"] if svc["app_name"] else consts.Prefix["service_detail_file"]
+    file_name_id = current_folder + prefix + svc["uuid"]
+    file_name_svc_name = current_folder + prefix + svc["service_name"]
+    svc_detail = utils.send_request("GET", consts.URLS["get_or_delete_svc_detail"].format(service_id=service_id))
+    utils.file_writer(file_name_id, svc_detail)
+    # detail for svc_name
+    utils.file_writer(file_name_svc_name, svc_detail)
+
+
 def init_svc_detail():
     svc_list = get_service_list()
     for svc in svc_list:
-        file_name_id = utils.get_current_folder() + consts.Prefix["service_detail_file"] + svc["uuid"]
-        file_name_svc_name = utils.get_current_folder() + consts.Prefix["service_detail_file"] + svc["service_name"]
-        svc_detail = utils.send_request("GET", consts.URLS["get_or_delete_svc_detail"].format(service_id=svc["uuid"]))
-        utils.file_writer(file_name_id, svc_detail)
-        # detail for svc_name
-        utils.file_writer(file_name_svc_name, svc_detail)
+        svc_detail_handler(svc)
 
 
 def get_service_detail(svc_id_or_name):
@@ -378,8 +384,8 @@ def trans_pod_controller(svc):
     kubernetes_attr = []
     service_name = svc["service_name"].lower()
     replicas = svc["target_num_instances"]
-    # if svc["current_status"] != "Running":
-    #    replicas = 0
+    if svc["current_status"] != "Running":
+        replicas = 0
     k8s_controller = {
         "apiVersion": "extensions/v1beta1",
         "kind": svc["pod_controller"],
@@ -477,7 +483,8 @@ def trans_pod_controller(svc):
             "apiVersion": "v1",
             "metadata": {
                 "name": service_name,
-                "namespace": svc["service_namespace"]
+                "namespace": svc["space_name"]
+                # "namespace": svc["service_namespace"]
             },
             "spec": {
                 "selector": {
@@ -497,7 +504,7 @@ def trans_pod_controller(svc):
                     "apiVersion": "v1",
                     "metadata": {
                         "name": kube_svc["name"],
-                        "namespace": svc["service_namespace"]
+                        "namespace": svc["space_name"]
                     },
                     "spec": {
                         "selector": {
@@ -531,8 +538,8 @@ def trans_svc_data(svc):
         app_data["resource"]["name"] = consts.Prefix["app_name_prefix"] + svc["service_name"].lower()
 
     app_data["namespace"] = {
-        "name": svc["service_namespace"],
-        "uuid": namespaces.get_alauda_ns_by_name(svc["service_namespace"])["uuid"]
+        "name": svc["space_name"],
+        "uuid": namespaces.get_alauda_ns_by_name(svc["space_name"])["uuid"]
     }
     app_data["cluster"] = {
         "name": svc["region_name"],
@@ -618,7 +625,13 @@ def main():
 
             print "\nbegin create app for service {} ".format(service_name)
             app_info = create_app(app_data)
-            if consts.Configs["use_lb"]:
+            is_running = True
+            if service_status != "Running":
+                is_running = False
+                content = "{}-{}-{}\n".format(utils.get_current_project(), service_name, service_status)
+                utils.file_writer("not_running_svc.list", content, "a+")
+                print "service {} current status is {}, will not waiting for created done".format(service_name, service_status)
+            if consts.Configs["use_lb"] and is_running:
                 # print app_info
                 print "\nwaiting new app {} for create ".format(service_name)
                 create_done = False

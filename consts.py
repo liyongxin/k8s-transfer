@@ -10,22 +10,34 @@ Configs = {
 
 Prefix = {
     "app_name_prefix": "app-" + Configs["region_name"] + "-",
+    "app_create_data_prefix": "app-data-" + Configs["region_name"] + "-",
     "cm_name_prefix": "cm-" + Configs["region_name"] + "-",
     "lb_name_prefix": "lb-" + Configs["region_name"] + "-",
     "pipeline_name_prefix": "pipeline-" + Configs["region_name"] + "-",
     "task_file": "task_" + Configs["region_name"],
     "current_project_file": "project",
     "service_list_file": "service_list_" + Configs["namespace"] + "_" + Configs["region_name"],
-    "service_detail_file": "service_" + Configs["namespace"] + "_" + Configs["region_name"] + "_"
+    "service_detail_file": "service_" + Configs["namespace"] + "_" + Configs["region_name"] + "_",
+    "app_list_file": "app_list_" + Configs["namespace"] + "_" + Configs["region_name"],
+    "app_service_detail_file": "app_service_" + Configs["namespace"] + "_" + Configs["region_name"] + "_"
 }
 
 # trans will be skipped when service in ExcludedServiceNames
 ExcludedServices = []
 
+# trans will be skipped when service in ExcludedServiceNames
+ExcludedApps = []
+
+
 IncludeServiceStatus = [
     "Running",
     "Stopped",
     "StartError"
+]
+
+IncludeAppStatus = [
+    "Running",
+    "Stopped"
 ]
 
 URLS = {
@@ -47,6 +59,8 @@ URLS = {
         namespace=Configs['namespace'], region_name=Configs['region_name']),
     "get_or_delete_svc_detail": "/v1/services/{namespace}/{service_id}".format(
         namespace=Configs['namespace'], service_id="{service_id}"),
+    "get_or_delete_application_detail": "/v1/applications/{namespace}/{app_id}".format(
+        namespace=Configs['namespace'], app_id="{app_id}"),
     "get_config_content": "/v1/configs/{namespace}/{filename}".format(
         namespace=Configs['namespace'], filename="{filename}"),
     "create_cm": "/v2/configmaps/",
@@ -66,7 +80,8 @@ URLS = {
     "get_all_pipelines": "/v1/pipelines/{namespace}/config?page_size=100".format(namespace=Configs['namespace']),
     "get_or_update_pipeline": "/v1/pipelines/{namespace}/config/{pipeline_id}".format(
         namespace=Configs['namespace'], pipeline_id="{pipeline_id}"),
-    "get_envfile": "/v1/env-files/{namespace}/{file_id}".format(namespace=Configs['namespace'], file_id="{file_id}")
+    "get_envfile": "/v1/env-files/{namespace}/{file_id}".format(namespace=Configs['namespace'], file_id="{file_id}"),
+    "get_application_list": "v1/applications/{namespace}"
 }
 # kubectl get
 GET_ALL_NS = "kubectl get ns --no-headers -o=custom-columns=NAME:.metadata.name"

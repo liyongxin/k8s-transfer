@@ -104,7 +104,8 @@ def trans_manual_control_task(task_data):
 
 def trans_test_container_task(task_data):
     transed_data = copy.deepcopy(task_data)
-    k8s_namespace_name = "default--" + transed_data["space_name"]
+    # k8s_namespace_name = "default--" + transed_data["space_name"]
+    k8s_namespace_name = transed_data["space_name"]
     k8s_namespace_resource = namespaces.get_alauda_ns_by_name(k8s_namespace_name)
     transed_data["k8s_namespace_uuid"] = k8s_namespace_resource["uuid"]
     transed_data["k8s_namespace"] = k8s_namespace_name

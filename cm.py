@@ -6,39 +6,6 @@ import namespaces
 from utils import utils
 
 
-def create_cm_v1():
-    svc_list = services.get_service_list()
-    for svc in svc_list:
-        cm_file_name = consts.Prefix["cm_name_prefix"] + svc["service_name"].lower()
-        if not os.path.exists(cm_file_name):
-            print "ERROR:cm file {} doesn't exists!".format(cm_file_name)
-            continue
-        cm_data = utils.file_reader(cm_file_name)
-        print "config map data for file {}".format(cm_file_name)
-        print cm_data
-        data = {
-            "resource": {
-                "name": cm_file_name
-            },
-            "namespace": {
-                "uuid": namespaces.get_alauda_ns_by_name(svc["service_namespace"])["uuid"],
-                "name": svc["service_namespace"],
-            },
-            "cluster": {
-                "name": svc["region_name"],
-                "uuid": svc["region_uuid"]
-            },
-            "kubernetes": {
-                "apiVersion": "v1",
-                "kind": "ConfigMap",
-                "metadata": {
-                    "name": cm_file_name
-                },
-                "data": cm_data
-            }
-        }
-
-
 def create_cm():
     current_folder = utils.get_current_folder()
     print "begin create configMap "
@@ -57,8 +24,8 @@ def create_cm():
                     "name": filename.replace("_", "-")
                 },
                 "namespace": {
-                    "uuid": namespaces.get_alauda_ns_by_name(svc_detail["service_namespace"])["uuid"],
-                    "name": svc_detail["service_namespace"],
+                    "uuid": namespaces.get_alauda_ns_by_name(svc_detail["space_name"])["uuid"],
+                    "name": svc_detail["space_name"],
                 },
                 "cluster": {
                     "name": svc_detail["region_name"],

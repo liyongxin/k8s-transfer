@@ -68,7 +68,7 @@ def sync_ns_v2():
                 "name": consts.Configs["region_name"]
             },
             "resource": {
-                "name": "default--" + ns["name"]
+                "name": ns["name"]
             }
         }
         print "begin sync namespace {} ".format(ns["name"])
@@ -91,7 +91,8 @@ def sync_ns():
         print "begin sync namespace for project {} \n".format(name or "default")
         resource_ns = utils.send_request("GET", consts.URLS["get_resource_ns"], specific_project=name)
         for ns in resource_ns:
-            k8s_ns_name = "default--" + ns["name"]
+            # k8s_ns_name = "default--" + ns["name"]
+            k8s_ns_name = ns["name"]
             print "begin build sync sql of namespace for project {} and resource_namespace {}".format(
                 name or "default", k8s_ns_name)
             k8s_ns = get_k8s_ns_by_name(k8s_ns_name)
