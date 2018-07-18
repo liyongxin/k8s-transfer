@@ -70,14 +70,14 @@ def trans_app_data(app):
 
     app_data["namespace"] = {
         "name": app["space_name"],
-        "uuid": namespaces.get_alauda_ns_by_name(app["space_name"])["uuid"]
+        "uuid": namespaces.get_alauda_ns_by_name(app["space_name"])["uid"]
     }
     app_data["cluster"] = {
         "name": app["region_name"],
         "uuid": app["region_uuid"]
     }
     for app_service in app["services"]:
-        app_service_detail = get_app_service_detail(app_service["service_name"])
+        app_service_detail = get_app_service_detail(app_service["service_name"].lower())
         app_data["kubernetes"].extend(services.trans_pod_controller(app_service_detail))
         if len(app_service_detail["mount_points"]) > 0:
             app_data["resource"]["create_method"] = "yaml"
@@ -115,12 +115,17 @@ def main():
             for count in range(20):
                 time.sleep(3)
                 v1_application_info = get_v1_app_by_api(app["uuid"])
-                if not v1_application_info:
+                if isinstance(v1_application_info, dict) and "errors" in v1_application_info:
                     print "\n app {} delete done".format(app_name)
                     break
 
             print "\nbegin create app for application {} ".format(app_name)
             app_info = services.create_app(app_data)
+            if isinstance(app_info, dict) and "errors" in app_info:
+                search_apps = services.get_app_by_name(app_data["resource"]["name"])
+                if len(search_apps) == 0:
+                    exit("create app error!!!!")
+                app_info = search_apps[0]
             is_running = True
             if app_status != "Running":
                 is_running = False
@@ -142,30 +147,31 @@ def main():
                     else:
                         print "\n app {} current status is {}, continue waiting...".format(app_name, app_current_state)
                 if not create_done:
-                    print "app update too slow , please check!"
-                    exit(1)
-                # begin update app for bind old tag
-                app = services.get_app_by_api(app_info["resource"]["uuid"])
-                update_done = False
-                services.update_app(app)
-                print "\nwaiting app {} for update ".format(app_name)
-                for count in range(50):
-                    time.sleep(3)
+                    print "application create too slow , please check!"
+                    # exit(1)
+                if create_done and consts.Configs["update_app"]:
+                    # begin update app for bind old tag
                     app = services.get_app_by_api(app_info["resource"]["uuid"])
-                    app_current_state = app["resource"]["status"]
-                    if app_current_state == "Running":
-                        print "\n app {} update done".format(app_name)
-                        update_done = True
-                        break
-                    else:
-                        print "\n app {} current status is {}, continue waiting...".format(app_name,
-                                                                                           app_current_state)
-                if not update_done:
-                    print "app update too slow , please check!"
-                    exit(1)
+                    update_done = False
+                    services.update_app(app)
+                    print "\nwaiting app {} for update ".format(app_name)
+                    for count in range(50):
+                        time.sleep(3)
+                        app = services.get_app_by_api(app_info["resource"]["uuid"])
+                        app_current_state = app["resource"]["status"]
+                        if app_current_state == "Running":
+                            print "\n app {} update done".format(app_name)
+                            update_done = True
+                            break
+                        else:
+                            print "\n app {} current status is {}, continue waiting...".format(app_name,
+                                                                                               app_current_state)
+                    if not update_done:
+                        print "application update too slow , please check!"
+                        # exit(1)
             # handle lb binding
             for app_service in app["services"]:
-                lb.handle_lb_for_svc(app_service["service_name"])
+                lb.handle_lb_for_svc(app_service["service_name"].lower())
             # if service_status == "Stopped":
             #    app_id = app_info["resource"]["uuid"]
             #    utils.send_request("PUT", consts.URLS["stop_app"].format(app_id=app_id))

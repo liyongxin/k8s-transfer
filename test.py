@@ -19,4 +19,8 @@ if __name__ == '__main__':
     ste = "[\"bin\", \"sh\"]"
     if ste.startswith("[") and ste.endswith("]"):
         arr = json.loads(ste)
-    print arr[0]
+
+    hhh = "duplicate key value violates unique constraint alery exiets"
+    print hhh.find("duplicate key value violates unique constraint")
+    args = "www.baidu.cn www.c.cn"
+    print args.split(" ")

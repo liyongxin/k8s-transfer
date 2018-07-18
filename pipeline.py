@@ -83,7 +83,7 @@ def trans_common_task(task):
 def trans_manual_control_task(task_data):
     transed_data = copy.deepcopy(task_data)
     link = task_data["link"]
-    service_name = link["name"]
+    service_name = link["name"].lower()
     new_svc_res = services.get_new_svc_by_name(service_name)
     if len(new_svc_res) == 0:
         print "ERROR: find no svc for pipeline update ,will skip"
@@ -107,7 +107,7 @@ def trans_test_container_task(task_data):
     # k8s_namespace_name = "default--" + transed_data["space_name"]
     k8s_namespace_name = transed_data["space_name"]
     k8s_namespace_resource = namespaces.get_alauda_ns_by_name(k8s_namespace_name)
-    transed_data["k8s_namespace_uuid"] = k8s_namespace_resource["uuid"]
+    transed_data["k8s_namespace_uuid"] = k8s_namespace_resource["uid"]
     transed_data["k8s_namespace"] = k8s_namespace_name
     if "link" in transed_data:
         del transed_data["link"]

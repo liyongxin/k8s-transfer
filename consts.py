@@ -1,17 +1,18 @@
 
 Configs = {
-    "api_url": "http://140.143.10.131:20081",
-    "token": "75f99be461c38fe04376bdc155a0b443231fe498",
-    "region_name": "lbx2",
+    "api_url": "http://140.143.3.81:20081",
+    "token": "49ac72f68d6e0d31688637c7b9733460c49ce5c6",
+    "region_name": "tencent_ops",
     "namespace": "alauda",
     "db_engine": "postgres",  # mysql or postgres
-    "use_lb": True  # True: handle lb bindings
+    "use_lb": True,  # True: handle lb bindings
+    "update_app": True  # True: update app for bind old lb info after app create done
 }
 
 Prefix = {
-    "app_name_prefix": "app-" + Configs["region_name"] + "-",
+    "app_name_prefix": "app-" + Configs["region_name"].lower().replace("_", "-") + "-",
     "app_create_data_prefix": "app-data-" + Configs["region_name"] + "-",
-    "cm_name_prefix": "cm-" + Configs["region_name"] + "-",
+    "cm_name_prefix": "cm-" + Configs["region_name"].lower().replace("_", "-") + "-",
     "lb_name_prefix": "lb-" + Configs["region_name"] + "-",
     "pipeline_name_prefix": "pipeline-" + Configs["region_name"] + "-",
     "task_file": "task_" + Configs["region_name"],
@@ -66,6 +67,8 @@ URLS = {
     "create_cm": "/v2/kubernetes/clusters/{region_name}/configmaps/".format(region_name=Configs['region_name']),
     "create_app": "/v2/apps",
     "stop_app": "/v2/apps/{app_id}/stop",
+    "search_app": "/v2/apps/?cluster={region_name}&namespace=&name={app_name}".format(
+        region_name=Configs["region_name"], app_name="{app_name}"),
     "get_lb": "/v1/load_balancers/{namespace}?region_name={region_name}&frontend=true".format(
         namespace=Configs['namespace'], region_name=Configs['region_name']),
     "lb_frontends": "/v1/load_balancers/{namespace}/{lb_name}/frontends".format(
@@ -80,8 +83,9 @@ URLS = {
     "get_all_pipelines": "/v1/pipelines/{namespace}/config?page_size=100".format(namespace=Configs['namespace']),
     "get_or_update_pipeline": "/v1/pipelines/{namespace}/config/{pipeline_id}".format(
         namespace=Configs['namespace'], pipeline_id="{pipeline_id}"),
-    "get_envfile": "/v1/env-files/{namespace}/{file_id}".format(namespace=Configs['namespace'], file_id="{file_id}"),
-    "get_application_list": "v1/applications/{namespace}"
+    "get_envfile": "/v1/env-files/{namespace}/{file_id}".format(namespace=Configs["namespace"], file_id="{file_id}"),
+    "get_application_list": "/v1/applications/{namespace}?region={region_name}".format(
+        namespace=Configs['namespace'], region_name=Configs["region_name"])
 }
 # kubectl get
 GET_ALL_NS = "kubectl get ns --no-headers -o=custom-columns=NAME:.metadata.name"

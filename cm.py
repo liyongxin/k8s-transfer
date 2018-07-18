@@ -30,7 +30,12 @@ def create_cm():
                 "data": cm_data
             }
             print "begin create configMap for {}".format(current_folder + filename)
-            utils.send_request("POST", consts.URLS["create_cm"], data)
+            res = utils.send_request("POST", consts.URLS["create_cm"], data)
+            if isinstance(res, list) and len(res) > 0:
+                print "configMap {} create success".format(current_folder + filename)
+            else:
+                print "configMap {} create ERROR!!!".format(current_folder + filename)
+                exit(1)
 
 
 def get_cm(cm_file):

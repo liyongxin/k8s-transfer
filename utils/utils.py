@@ -55,7 +55,8 @@ def send_request(method, url, params=None, specific_project=None):
                 writer = open("error_urls", "a+")
                 writer.write("\n\nERROR!!!!!! response="+str(response)+"\nurl="+req_url+"\nparams="+str(params)+"\n\n")
                 writer.close()
-                return False
+                print response
+                return response
                 # raise Exception(res["errors"][0]["message"])
             elif isinstance(response, dict) and "message" in response and response["message"] == "SUCCESS":
                 return response["data"] or response

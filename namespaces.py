@@ -32,6 +32,8 @@ def get_alauda_namespaces():
 
 
 def get_alauda_ns_by_name(ns_name):
+    if ns_name == "":
+        ns_name = "default"
     ns_list = get_alauda_namespaces()
     for ns in ns_list:
         resource = ns["kubernetes"]["metadata"]
@@ -57,6 +59,12 @@ def sync_ns_v1():
 
 def sync_ns_v2():
     resource_ns = utils.send_request("GET", consts.URLS["get_resource_ns"])
+    add_default = True
+    for ns in resource_ns:
+        if ns["name"] == "default":
+            add_default = False
+    if add_default:
+        resource_ns.append({"name": "default"})
     for ns in resource_ns:
         req_params = {
             "apiVersion": "v1",
@@ -66,7 +74,18 @@ def sync_ns_v2():
             }
         }
         print "begin sync namespace {} ".format(ns["name"])
-        utils.send_request("POST", consts.URLS["create_get_ns"], req_params)
+        res = utils.send_request("POST", consts.URLS["create_get_ns"], req_params)
+        if isinstance(res, dict) and "result" in res and len(res["result"]) > 0:
+            print "create namespace for {} success".format(ns["name"])
+        elif isinstance(res, list) and len(res) > 0 and "kubernetes" in res[0]:
+            print "create namespace for {} success , list".format(ns["name"])
+        elif isinstance(res, dict) and "errors" in res and \
+                res["errors"][0]["message"].find("duplicate key value violates unique constraint") >= 0:
+            print res["errors"][0]["message"] + ", will be skipped"
+        else:
+            print "create namespace {} error!!!".format(ns["name"])
+            print res
+            exit(1)
 
 
 def sync_ns():

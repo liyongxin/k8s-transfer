@@ -183,8 +183,8 @@ def handle_lb_for_svc(svc_name):
             for rule in rules:
                 rule_task = lb_name + "_frontend_" + str(port) + "_rule_" + rule["rule_id"]
                 if utils.no_task_record(rule_task):
-                    if rule["type"] == "system":
-                        continue
+                    # if rule["type"] == "system":
+                    #    continue
                     print "\nbegin create rule for domain {} and port {}".format(rule["domain"], port)
                     rule_info = create_rule(lb_name, port, copy.deepcopy(rule))
                     # record rule create task
