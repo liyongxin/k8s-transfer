@@ -618,6 +618,11 @@ def update_app(app):
     utils.send_request("PATCH", consts.URLS["get_app_by_id"].format(app_id=app["resource"]["uuid"]), data)
 
 
+def build_volume_sql():
+    region_uuid = utils.get_region_info("uuid")
+    return "update resources_resource set project_uuid= '' where region_id = {}".format(region_uuid)
+
+
 def main():
     svc_list = get_service_list()
     for svc in svc_list:

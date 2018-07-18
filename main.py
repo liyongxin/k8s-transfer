@@ -74,4 +74,8 @@ if __name__ == '__main__':
         services.main()
         applications.main()
         pipeline.main()
+        if utils.no_task_record("update_jakiro_resource"):
+            services.build_volume_sql()
+            utils.task_record("update_jakiro_resource")
+
 
