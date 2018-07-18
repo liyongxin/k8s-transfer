@@ -24,10 +24,10 @@ Prefix = {
 }
 
 # trans will be skipped when service in ExcludedServiceNames
-ExcludedServices = []
+ExcludedServices = []  # ["test-aaa-1wsq", "test-bbb-cw11s"]
 
 # trans will be skipped when service in ExcludedServiceNames
-ExcludedApps = []
+ExcludedApps = []  # ["test-app-1wsq", "test-app-cw11s"]
 
 
 IncludeServiceStatus = [
