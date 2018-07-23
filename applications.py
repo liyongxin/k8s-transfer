@@ -112,7 +112,7 @@ def main():
             print "\nbegin delete application old application {}".format(app_name)
             delete_old_application(app["uuid"])
             print "\nwaiting application {} for delete ".format(app_name)
-            for count in range(20):
+            for count in range(50):
                 time.sleep(3)
                 v1_application_info = get_v1_app_by_api(app["uuid"])
                 if isinstance(v1_application_info, dict) and "errors" in v1_application_info:
@@ -127,7 +127,7 @@ def main():
                     exit("create app error!!!!")
                 app_info = search_apps[0]
             is_running = True
-            if app_status != "Running":
+            if app_status not in ["Running", "Warning"]:
                 is_running = False
                 content = "{}-{}-{}\n".format(utils.get_current_project(), app_name, app_status)
                 utils.file_writer("not_running_app.list", content, "a+")
@@ -171,7 +171,10 @@ def main():
                         # exit(1)
             # handle lb binding
             for app_service in app["services"]:
-                lb.handle_lb_for_svc(app_service["service_name"].lower())
+                if "resource" in app_service and "name" in app_service["resource"]:
+                    lb.handle_lb_for_svc(app_service["resource"]["name"].lower())
+                elif "service_name" in app_service:
+                    lb.handle_lb_for_svc(app_service["service_name"].lower())
             # if service_status == "Stopped":
             #    app_id = app_info["resource"]["uuid"]
             #    utils.send_request("PUT", consts.URLS["stop_app"].format(app_id=app_id))

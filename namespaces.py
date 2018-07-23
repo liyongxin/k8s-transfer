@@ -43,20 +43,6 @@ def get_alauda_ns_by_name(ns_name):
     raise Exception("Error: find no namespace match for {}".format(ns_name))
 
 
-def sync_ns_v1():
-    k8_ns = get_k8s_namespaces()
-    for ns in k8_ns:
-        req_params = {
-            "apiVersion": "v1",
-            "kind": "Namespace",
-            "metadata": {
-                "name": ns["name"]
-            }
-        }
-        print "begin sync namespace {} from k8s to alauda metadata".format(ns['metadata']['name'])
-        utils.send_request("POST", consts.URLS["create_get_ns"], req_params)
-
-
 def sync_ns_v2():
     resource_ns = utils.send_request("GET", consts.URLS["get_resource_ns"])
     add_default = True
@@ -86,6 +72,25 @@ def sync_ns_v2():
             print "create namespace {} error!!!".format(ns["name"])
             print res
             exit(1)
+
+
+def mock_sync_ns():
+    resource_ns = utils.send_request("GET", consts.URLS["get_resource_ns"])
+    add_default = True
+    for ns in resource_ns:
+        if ns["name"] == "default":
+            add_default = False
+    if add_default:
+        resource_ns.append({"name": "default"})
+    for ns in resource_ns:
+        req_params = {
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "name": ns["name"]
+            }
+        }
+        print "begin sync namespace {} with params ".format(ns["name"], json.dumps(req_params))
 
 
 def sync_ns():

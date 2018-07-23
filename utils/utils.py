@@ -106,18 +106,16 @@ def check_region_version():
 
 def task_record(task):
     task = project.get_current_project() + "_" + task
-    task_file = consts.Prefix["task_file"]
+    task_file = get_task_file()
     if not os.path.exists(task_file):
         os.mknod(task_file)
-    writer = open(task_file, "a+")
-    writer.write(task + "\n")
-    writer.close()
+    file_writer(task_file, task + "\n", "a+")
     print '\n==============' + task + ' has finished===================\n'
 
 
 def no_task_record(task):
     task = project.get_current_project() + "_" + task
-    task_file = consts.Prefix["task_file"]
+    task_file = get_task_file()
     if not os.path.exists(task_file):
         os.mknod(task_file)
     reader = open(task_file, "r")
@@ -131,18 +129,42 @@ def no_task_record(task):
     return True
 
 
+def init_exec_mode(value):
+    mode_file = consts.Prefix["mode_file"]
+    if not os.path.exists(mode_file):
+        os.mknod(mode_file)
+    file_writer(mode_file, value, "w")
+    print '\n==============init exec mode {}===================\n'.format(value)
+
+
+def get_exec_mode():
+    mode_file_name = consts.Prefix["mode_file"]
+    reader = open(mode_file_name, "r")
+    mode = reader.readline()
+    reader.close()
+    return mode
+
+
 def task_common_record(task):
-    task_file = consts.Prefix["task_file"]
+    task_file = get_task_file()
     if not os.path.exists(task_file):
         os.mknod(task_file)
-    writer = open(task_file, "a+")
-    writer.write(task + "\n")
-    writer.close()
+    file_writer(task_file, task + "\n", "a+")
     print '\n==============' + task + ' has finished===================\n'
 
 
+def get_task_file():
+    mode = get_exec_mode()
+    if mode == "prod":
+        return consts.Prefix["task_file"]
+    elif mode == "mock":
+        return consts.Prefix["mock_task_file"]
+    else:
+        exit("ERROR!! no mode match prod and mock")
+
+
 def no_common_task_record(task):
-    task_file = consts.Prefix["task_file"]
+    task_file = get_task_file()
     if not os.path.exists(task_file):
         os.mknod(task_file)
     reader = open(task_file, "r")
@@ -158,7 +180,10 @@ def no_common_task_record(task):
 
 def file_writer(filename, data, mode="w"):
     writer = open(filename, mode)
-    writer.write(json.dumps(data))
+    if isinstance(data, list) or isinstance(data, dict):
+        writer.write(json.dumps(data))
+    else:
+        writer.write(data)
     writer.close()
 
 

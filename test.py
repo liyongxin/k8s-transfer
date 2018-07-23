@@ -24,3 +24,14 @@ if __name__ == '__main__':
     print hhh.find("duplicate key value violates unique constraint")
     args = "www.baidu.cn www.c.cn"
     print args.split(" ")
+    print hhh.lower()
+
+    sum = 0
+    for i in range(1, 101):
+        if i % 2 == 0:
+            sum += i
+    print sum
+
+    hh = 2
+    is_app = True if hh > 3 else False
+    print is_app

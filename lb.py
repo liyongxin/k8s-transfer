@@ -48,7 +48,7 @@ def get_lb_frontends(lb_name):
     url = consts.URLS["lb_frontends"].format(lb_name=lb_name)
     lb_ft = utils.send_request("GET", url)
     print "lb frontends for {}".format(lb_name)
-    print lb_ft
+    # print lb_ft
     return lb_ft
 
 

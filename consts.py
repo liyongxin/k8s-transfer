@@ -13,9 +13,12 @@ Prefix = {
     "app_name_prefix": "app-" + Configs["region_name"].lower().replace("_", "-") + "-",
     "app_create_data_prefix": "app-data-" + Configs["region_name"] + "-",
     "cm_name_prefix": "cm-" + Configs["region_name"].lower().replace("_", "-") + "-",
+    "app_cm_flag_file": "alauda-cm-",
     "lb_name_prefix": "lb-" + Configs["region_name"] + "-",
     "pipeline_name_prefix": "pipeline-" + Configs["region_name"] + "-",
     "task_file": "task_" + Configs["region_name"],
+    "mock_task_file": "mock_task_" + Configs["region_name"],
+    "mode_file": "mode_" + Configs["region_name"],
     "current_project_file": "project",
     "service_list_file": "service_list_" + Configs["namespace"] + "_" + Configs["region_name"],
     "service_detail_file": "service_" + Configs["namespace"] + "_" + Configs["region_name"] + "_",
@@ -38,7 +41,8 @@ IncludeServiceStatus = [
 
 IncludeAppStatus = [
     "Running",
-    "Stopped"
+    "Stopped",
+    "PartialRunning"
 ]
 
 URLS = {

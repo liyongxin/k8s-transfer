@@ -19,16 +19,11 @@ if __name__ == '__main__':
     confirm
     """
     # init exec mode
-    utils.init_exec_mode("prod")
-    if utils.check_region_version():
-        print "update app_region set platform_version = 'v3' where name='{region_name}'".\
-            format(region_name=consts.Configs["region_name"])
-        print "\nPlease execute sql to update region version from v2 to v3;\n"
-        exit(1)
+    utils.init_exec_mode("mock")
 
-    # build sql for table jakiro.resources_resource, should be executed by hands
+    # sync namespace
     if utils.no_common_task_record("sync_namespace"):
-        namespaces.sync_ns_v2()
+        namespaces.mock_sync_ns()
         # print "Please execute sql for jakiro db by hands;\n"
         utils.task_common_record("sync_namespace")
 
@@ -66,7 +61,6 @@ if __name__ == '__main__':
 
         if utils.no_task_record("init_cm"):
             cm.init_cm()
-            cm.init_app_cm()
             utils.task_record("init_cm")
 
         if utils.no_task_record("create_cm"):

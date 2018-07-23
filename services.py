@@ -99,7 +99,7 @@ def get_svc_labels(svc_id, is_app=False):
 
 
 def get_svc_affinity(svc):
-
+    is_app = True if svc["app_name"] else True
     pod_affinity = svc["kube_config"]["pod"]["podAffinity"]
     if "requiredDuringSchedulingIgnoredDuringExecution" in pod_affinity:
         for item in pod_affinity["requiredDuringSchedulingIgnoredDuringExecution"]:
@@ -111,7 +111,10 @@ def get_svc_affinity(svc):
                     if "values" in expression:
                         tmp = []
                         for value in expression["values"]:
-                            tmp.append(get_service_detail(value)["service_name"].lower())
+                            if is_app:
+                                tmp.append(applications.get_app_service_detail(value)["service_name"].lower())
+                            else:
+                                tmp.append(get_service_detail(value)["service_name"].lower())
                         expression["values"] = tmp
 
     pod_antiAffinity = svc["kube_config"]["pod"]["podAntiAffinity"]
@@ -125,7 +128,10 @@ def get_svc_affinity(svc):
                     if "values" in expression:
                         tmp = []
                         for value in expression["values"]:
-                            tmp.append(get_service_detail(value)["service_name"].lower())
+                            if is_app:
+                                tmp.append(applications.get_app_service_detail(value)["service_name"].lower())
+                            else:
+                                tmp.append(get_service_detail(value)["service_name"].lower())
                         expression["values"] = tmp
 
     return {
@@ -167,18 +173,25 @@ def get_health_check(svc_id, is_app=False):
     else:
         svc_detail = get_service_detail(svc_id)
     hc = svc_detail["health_checks"][0]
+    # {"protocol": "TCP", "timeout_seconds": 15, "interval_seconds": 2, "max_consecutive_failures": 2,
+    #  "port": 2182, "grace_period_seconds": 100}
     result = {
         "initialDelaySeconds": hc["grace_period_seconds"],
         "periodSeconds": hc["interval_seconds"],
         "timeoutSeconds": hc["timeout_seconds"],
         "successThreshold": 1,
-        "failureThreshold": hc["max_consecutive_failures"],
-        "httpGet": {
+        "failureThreshold": hc["max_consecutive_failures"]
+    }
+    if hc["protocol"] in ["HTTP", "HTTPS"]:
+        result["httpGet"] = {
             "path": hc["path"],
             "scheme": hc["protocol"],
             "port": hc["port"]
         }
-    }
+    if hc["protocol"] == "TCP":
+        result["tcpSocket"] = {
+            "port": hc["port"]
+        }
     return result
 
 
@@ -197,14 +210,16 @@ def get_volume_mounts(svc_id, is_app=False):
         svc = get_service_detail(svc_id)
     mount_points = svc["mount_points"]
     svc_name = svc["service_name"].lower()
+    svc_uuid = svc["uuid"]
     volume_mounts = []
     volumes = []
     index = 0
+    k8_cm_name = consts.Prefix["cm_name_prefix"] + consts.Prefix["app_cm_flag_file"] + svc_uuid if svc["app_name"] \
+        else consts.Prefix["cm_name_prefix"] + svc_uuid
     for mp in mount_points:
         if mp["type"] == "config":
             value = mp["value"]
             config_key = value["key"]
-            k8_cm_name = consts.Prefix["cm_name_prefix"] + svc_name
             volume_obj = {
                 "name": "configmap-" + svc_name + "-" + str(index),
                 "configMap": {
@@ -224,7 +239,6 @@ def get_volume_mounts(svc_id, is_app=False):
             volumes.append(volume_obj)
             volume_mounts.append(mount_obj)
         elif mp["type"] == "raw" or mp["type"] == "text":
-            k8_cm_name = consts.Prefix["cm_name_prefix"] + svc_name
             raw_key = "key" + mp["path"].replace("/", "-")
             volume_obj = {
                 "name": "configmap-" + svc_name + "-" + str(index),
