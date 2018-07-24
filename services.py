@@ -721,9 +721,9 @@ def main():
                         # exit(1)
             # handle lb binding
             lb.handle_lb_for_svc(service_name)
-            if service_status == "Stopped":
-                app_id = app_info["resource"]["uuid"]
-                utils.send_request("PUT", consts.URLS["stop_app"].format(app_id=app_id))
+            # if service_status == "Stopped":
+            #     app_id = app_info["resource"]["uuid"]
+            #    utils.send_request("PUT", consts.URLS["stop_app"].format(app_id=app_id))
             utils.task_record(task_single_svc)
             print "!!!!!Status Confirm: old service status is {}, " \
                   "please check if should change by hands".format(service_status)
