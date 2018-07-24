@@ -18,6 +18,11 @@ def get_app_list_for_current_project(results=None):
     return results
 
 
+def get_app_svc_namespace(app_svc_detail):
+    space_name = app_svc_detail["space_name"]
+    return app_svc_detail["app_name"] + "-" + space_name if space_name else "default"
+
+
 def init_app_list():
     app_list = get_app_list_for_current_project(results=[])
     file_name = utils.get_current_folder() + consts.Prefix["app_list_file"]
@@ -68,9 +73,11 @@ def trans_app_data(app):
     }
     app_data["resource"]["name"] = consts.Prefix["app_name_prefix"] + app["app_name"].lower()
 
+    app_namespace_name = app["app_name"] + "-" + app["space_name"] if app["space_name"] else "default"
+
     app_data["namespace"] = {
-        "name": app["space_name"],
-        "uuid": namespaces.get_alauda_ns_by_name(app["space_name"])["uid"]
+        "name": app_namespace_name,
+        "uuid": namespaces.get_alauda_ns_by_name(app_namespace_name)["uid"]
     }
     app_data["cluster"] = {
         "name": app["region_name"],

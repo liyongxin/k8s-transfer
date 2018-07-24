@@ -1,6 +1,7 @@
 import os
 import json
 import consts
+import applications
 from utils import utils
 
 
@@ -44,6 +45,7 @@ def get_alauda_ns_by_name(ns_name):
 
 
 def sync_ns_v2():
+    # resource namespace and app_name+space_name
     resource_ns = utils.send_request("GET", consts.URLS["get_resource_ns"])
     add_default = True
     for ns in resource_ns:
@@ -51,6 +53,10 @@ def sync_ns_v2():
             add_default = False
     if add_default:
         resource_ns.append({"name": "default"})
+    app_list = applications.get_app_list()
+    for app in app_list:
+        app_namespace = app["app_name"].lower() + "-" + app["space_name"].lower()
+        resource_ns.append({"name": app_namespace})
     for ns in resource_ns:
         req_params = {
             "apiVersion": "v1",

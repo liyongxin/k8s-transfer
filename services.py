@@ -146,20 +146,21 @@ def get_svc_env(svc_id, is_app=False):
     else:
         svc_detail = get_service_detail(svc_id)
     result = []
+    env_objs = {}
     if "envfiles" in svc_detail:
         for envfile in svc_detail["envfiles"]:
             content = envfile["content"]
             for env in content:
-                result.append({
-                    "name": env[0],
-                    "value": env[1]
-                })
+                env_objs[env[0]] = env[1]
+
     if "instance_envvars" in svc_detail:
         for key in svc_detail["instance_envvars"]:
-            result.append({
-                "name": key,
-                "value": svc_detail["instance_envvars"][key]
-            })
+            env_objs[key] = svc_detail["instance_envvars"][key]
+    for key in env_objs:
+        result.append({
+            "name": key,
+            "value": env_objs[key]
+        })
     return result
 
 
@@ -509,7 +510,7 @@ def trans_pod_controller(svc):
             "apiVersion": "v1",
             "metadata": {
                 "name": service_name,
-                "namespace": svc["space_name"]
+                "namespace": applications.get_app_svc_namespace(svc) if is_app else svc["space_name"]
                 # "namespace": svc["service_namespace"]
             },
             "spec": {
@@ -530,7 +531,7 @@ def trans_pod_controller(svc):
                     "apiVersion": "v1",
                     "metadata": {
                         "name": kube_svc["name"],
-                        "namespace": svc["space_name"]
+                        "namespace": applications.get_app_svc_namespace(svc) if is_app else svc["space_name"]
                     },
                     "spec": {
                         "selector": {
@@ -558,14 +559,14 @@ def trans_svc_data(svc):
         },
         "kubernetes": []
     }
-    if svc["app_name"]:
-        app_data["resource"]["name"] = svc["app_name"]
-    else:
-        app_data["resource"]["name"] = consts.Prefix["app_name_prefix"] + svc["service_name"].lower()
+
+    app_data["resource"]["name"] = consts.Prefix["app_name_prefix"] + svc["service_name"].lower()
+
+    namespace_name = svc["space_name"] or "default"
 
     app_data["namespace"] = {
-        "name": svc["space_name"] or "default",
-        "uuid": namespaces.get_alauda_ns_by_name(svc["space_name"])["uid"]
+        "name": namespace_name,
+        "uuid": namespaces.get_alauda_ns_by_name(namespace_name)["uid"]
     }
     app_data["cluster"] = {
         "name": svc["region_name"],

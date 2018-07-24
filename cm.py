@@ -31,7 +31,7 @@ def create_cm():
                 "kind": "ConfigMap",
                 "metadata": {
                     "annotations": {},
-                    "namespace": svc_detail["space_name"],
+                    "namespace": applications.get_app_svc_namespace(svc_detail) if is_app else svc_detail["space_name"],
                     "name": filename.replace("_", "-")
                 },
                 "data": cm_data
