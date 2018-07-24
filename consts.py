@@ -6,7 +6,7 @@ Configs = {
     "namespace": "alauda",
     "db_engine": "postgres",  # mysql or postgres
     "use_lb": True,  # True: handle lb bindings
-    "update_app": True  # True: update app for bind old lb info after app create done
+    "update_app": False  # True: update app for bind old lb info after app create done
 }
 
 Prefix = {
