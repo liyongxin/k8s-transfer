@@ -26,12 +26,6 @@ if __name__ == '__main__':
         print "\nPlease execute sql to update region version from v2 to v3;\n"
         exit(1)
 
-    # build sql for table jakiro.resources_resource, should be executed by hands
-    if utils.no_common_task_record("sync_namespace"):
-        namespaces.sync_ns_v2()
-        # print "Please execute sql for jakiro db by hands;\n"
-        utils.task_common_record("sync_namespace")
-
     # init lb info
     if utils.no_common_task_record("init_lb_list"):
         lb.init_lb_list()
@@ -41,6 +35,12 @@ if __name__ == '__main__':
     for pro in projects:
         # init project
         project.init_current_project(pro["name"])
+
+        # build sql for table jakiro.resources_resource, should be executed by hands
+        if utils.no_common_task_record("sync_namespace"):
+            namespaces.sync_ns_v2()
+            # print "Please execute sql for jakiro db by hands;\n"
+            utils.task_common_record("sync_namespace")
 
         if utils.no_task_record("init_services"):
             services.init_svc_list()
