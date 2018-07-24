@@ -60,6 +60,10 @@ if __name__ == '__main__':
             applications.init_app_svc_detail()
             utils.task_record("init_application_detail")
 
+        if utils.no_task_record("sync_applications_ns"):
+            namespaces.sync_app_ns()
+            utils.task_record("sync_applications_ns")
+
         if utils.no_task_record("init_applications_service_lb"):
             lb.init_app_svc_lb()
             utils.task_record("init_applications_service_lb")

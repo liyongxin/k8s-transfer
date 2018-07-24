@@ -44,19 +44,7 @@ def get_alauda_ns_by_name(ns_name):
     raise Exception("Error: find no namespace match for {}".format(ns_name))
 
 
-def sync_ns_v2():
-    # resource namespace and app_name+space_name
-    resource_ns = utils.send_request("GET", consts.URLS["get_resource_ns"])
-    add_default = True
-    for ns in resource_ns:
-        if ns["name"] == "default":
-            add_default = False
-    if add_default:
-        resource_ns.append({"name": "default"})
-    app_list = applications.get_app_list()
-    for app in app_list:
-        app_namespace = app["app_name"].lower() + "-" + app["space_name"].lower()
-        resource_ns.append({"name": app_namespace})
+def ns_handler(resource_ns):
     for ns in resource_ns:
         req_params = {
             "apiVersion": "v1",
@@ -78,6 +66,27 @@ def sync_ns_v2():
             print "create namespace {} error!!!".format(ns["name"])
             print res
             exit(1)
+
+
+def sync_ns_v2():
+    # resource namespace and app_name+space_name
+    resource_ns = utils.send_request("GET", consts.URLS["get_resource_ns"])
+    add_default = True
+    for ns in resource_ns:
+        if ns["name"] == "default":
+            add_default = False
+    if add_default:
+        resource_ns.append({"name": "default"})
+    ns_handler(resource_ns)
+
+
+def sync_app_ns():
+    app_list = applications.get_app_list()
+    resource_ns = []
+    for app in app_list:
+        app_namespace = app["app_name"].lower() + "-" + app["space_name"].lower()
+        resource_ns.append({"name": app_namespace})
+    ns_handler(resource_ns)
 
 
 def mock_sync_ns():
