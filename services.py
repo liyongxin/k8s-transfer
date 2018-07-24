@@ -410,8 +410,8 @@ def trans_pod_controller(svc):
     kubernetes_attr = []
     service_name = svc["service_name"].lower()
     replicas = svc["target_num_instances"]
-    if svc["current_status"] != "Running":
-        replicas = 0
+    # if svc["current_status"] != "Running":
+    #    replicas = 0
     k8s_controller = {
         "apiVersion": "extensions/v1beta1",
         "kind": svc["pod_controller"],
