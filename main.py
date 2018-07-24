@@ -40,7 +40,7 @@ if __name__ == '__main__':
         if utils.no_task_record("sync_namespace"):
             namespaces.sync_ns_v2()
             # print "Please execute sql for jakiro db by hands;\n"
-            utils.no_task_record("sync_namespace")
+            utils.task_record("sync_namespace")
 
         if utils.no_task_record("init_services"):
             services.init_svc_list()
