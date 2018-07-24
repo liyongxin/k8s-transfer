@@ -37,10 +37,10 @@ if __name__ == '__main__':
         project.init_current_project(pro["name"])
 
         # build sql for table jakiro.resources_resource, should be executed by hands
-        if utils.no_common_task_record("sync_namespace"):
+        if utils.no_task_record("sync_namespace"):
             namespaces.sync_ns_v2()
             # print "Please execute sql for jakiro db by hands;\n"
-            utils.task_common_record("sync_namespace")
+            utils.no_task_record("sync_namespace")
 
         if utils.no_task_record("init_services"):
             services.init_svc_list()

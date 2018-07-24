@@ -714,6 +714,10 @@ def main():
                             print "\n app {} update done".format(service_name)
                             update_done = True
                             break
+                        elif app_current_state == "Error":
+                            print "\n app {} update error!!!".format(service_name)
+                            update_done = True
+                            break
                         else:
                             print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
                     if not update_done:
