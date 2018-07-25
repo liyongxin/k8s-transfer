@@ -36,9 +36,9 @@ def init_app_svc_detail():
             services.svc_detail_handler(app_service)
 
 
-def get_app_service_detail(svc_id_or_name):
+def get_app_service_detail(svc_id):
     svc_detail = {}
-    file_name = utils.get_current_folder() + consts.Prefix["app_service_detail_file"] + svc_id_or_name.lower()
+    file_name = utils.get_current_folder() + consts.Prefix["app_service_detail_file"] + svc_id
     if path.exists(file_name):
         svc_detail = utils.file_reader(file_name)
     else:
@@ -84,7 +84,7 @@ def trans_app_data(app):
         "uuid": app["region_uuid"]
     }
     for app_service in app["services"]:
-        app_service_detail = get_app_service_detail(app_service["service_name"].lower())
+        app_service_detail = get_app_service_detail(app_service["uuid"].lower())
         app_data["kubernetes"].extend(services.trans_pod_controller(app_service_detail))
         if len(app_service_detail["mount_points"]) > 0:
             app_data["resource"]["create_method"] = "yaml"
