@@ -27,11 +27,11 @@ def init_svc_list():
 
 
 def svc_detail_handler(svc):
-    current_folder = utils.get_current_project()
+    current_folder = utils.get_current_folder()
     prefix = consts.Prefix["app_service_detail_file"] if svc["app_name"] else consts.Prefix["service_detail_file"]
     file_name_id = current_folder + prefix + svc["uuid"]
     file_name_svc_name = current_folder + prefix + svc["service_name"]
-    svc_detail = utils.send_request("GET", consts.URLS["get_or_delete_svc_detail"].format(service_id=service_id))
+    svc_detail = utils.send_request("GET", consts.URLS["get_or_delete_svc_detail"].format(service_id=svc["uuid"]))
     utils.file_writer(file_name_id, svc_detail)
     # detail for svc_name
     utils.file_writer(file_name_svc_name, svc_detail)
