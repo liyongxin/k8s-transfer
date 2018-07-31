@@ -81,7 +81,7 @@ URLS = {
     "get_or_update_pipeline": "/v1/pipelines/{namespace}/config/{pipeline_id}".format(
         namespace=Configs['namespace'], pipeline_id="{pipeline_id}"),
     "get_envfile": "/v1/env-files/{namespace}/{file_id}".format(namespace=Configs['namespace'], file_id="{file_id}"),
-    "get_application_list": "v1/applications/{namespace}"
+    "get_application_list": "/v1/applications/{namespace}"
 }
 # kubectl get
 GET_ALL_NS = "kubectl get ns --no-headers -o=custom-columns=NAME:.metadata.name"
