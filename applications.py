@@ -139,7 +139,7 @@ def main():
                 content = "{}-{}-{}\n".format(utils.get_current_project(), app_name, app_status)
                 utils.file_writer("not_running_app.list", content, "a+")
                 print "app {} current status is {}, will not waiting for created done".format(app_name,app_status)
-            if consts.Configs["use_lb"] and is_running:
+            if consts.Configs["wait_for_create_done"] and is_running:
                 # print app_info
                 print "\nwaiting new app {} for create ".format(app_name)
                 create_done = False
@@ -176,6 +176,8 @@ def main():
                     if not update_done:
                         print "application update too slow , please check!"
                         # exit(1)
+            else:
+                time.sleep(3)
             # handle lb binding
             for app_service in app["services"]:
                 if "resource" in app_service and "name" in app_service["resource"]:

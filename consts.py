@@ -5,7 +5,7 @@ Configs = {
     "region_name": "tencent_ops",
     "namespace": "alauda",
     "db_engine": "postgres",  # mysql or postgres
-    "use_lb": True,  # True: handle lb bindings
+    "wait_for_create_done": True,  # True: will waiting for service create done ,then create other
     "update_app": False  # True: update app for bind old lb info after app create done
 }
 
@@ -42,6 +42,7 @@ IncludeServiceStatus = [
 IncludeAppStatus = [
     "Running",
     "Stopped",
+    "StartError",
     "PartialRunning"
 ]
 
