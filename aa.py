@@ -3,6 +3,7 @@ import time
 import consts
 import namespaces
 import project
+import applications
 import lb
 from os import path
 from decimal import *
@@ -76,12 +77,15 @@ def get_new_svc_by_name(svc_name):
                 break
     if data["count"] == 0:
         print "Attention!!! not found new svc named {}".format(svc_name)
-    #    raise Exception("find {count} instances for {svc_name} ".format(count=data["count"], svc_name=svc_name))
+    # raise Exception("find {count} instances for {svc_name} ".format(count=data["count"], svc_name=svc_name))
     return result or data["results"]
 
 
-def get_svc_labels(svc_id):
-    svc_detail = get_service_detail(svc_id)
+def get_svc_labels(svc_id, is_app=False):
+    if is_app:
+        svc_detail = applications.get_app_service_detail(svc_id)
+    else:
+        svc_detail = get_service_detail(svc_id)
     lables = {
         "service.alauda.io/name": svc_detail["service_name"].lower(),
     }
@@ -91,7 +95,6 @@ def get_svc_labels(svc_id):
 
 
 def get_svc_affinity(svc):
-
     pod_affinity = svc["kube_config"]["pod"]["podAffinity"]
     if "requiredDuringSchedulingIgnoredDuringExecution" in pod_affinity:
         for item in pod_affinity["requiredDuringSchedulingIgnoredDuringExecution"]:
@@ -126,8 +129,12 @@ def get_svc_affinity(svc):
     }
 
 
-def get_svc_env(svc_id):
-    svc_detail = get_service_detail(svc_id)
+def get_svc_env(svc_id, is_app=False):
+    if is_app:
+        svc_detail = applications.get_app_service_detail(svc_id)
+    else:
+        svc_detail = get_service_detail(svc_id)
+
     result = []
     env_objs = {}
     if "envfiles" in svc_detail:
@@ -151,8 +158,11 @@ def get_envfile_by_id(file_id):
     return utils.send_request("GET", consts.URLS["get_envfile"].format(file_id=file_id))
 
 
-def get_health_check(svc_id):
-    svc_detail = get_service_detail(svc_id)
+def get_health_check(svc_id, is_app=False):
+    if is_app:
+        svc_detail = applications.get_app_service_detail(svc_id)
+    else:
+        svc_detail = get_service_detail(svc_id)
     hc = svc_detail["health_checks"][0]
     result = {
         "initialDelaySeconds": hc["grace_period_seconds"],
@@ -177,8 +187,11 @@ def get_create_method(svc_id):
         return "UI"
 
 
-def get_volume_mounts(svc_id):
-    svc = get_service_detail(svc_id)
+def get_volume_mounts(svc_id, is_app=False):
+    if is_app:
+        svc = applications.get_app_service_detail(svc_id)
+    else:
+        svc = get_service_detail(svc_id)
     mount_points = svc["mount_points"]
     svc_name = svc["service_name"].lower()
     volume_mounts = []
@@ -234,7 +247,7 @@ def get_volume_mounts(svc_id):
     if "volumes" in svc:
         for vol in svc["volumes"]:
             driver_name = vol["driver_name"]
-            if driver_name == "":   # host path
+            if driver_name == "":  # host path
                 volume_obj = {
                     "name": "hostpath-" + svc_name + "-" + str(index),
                     "hostPath": {
@@ -382,6 +395,7 @@ def get_run_command(svc):
 
 def trans_pod_controller(svc):
     kubernetes_attr = []
+    is_app = True if svc["app_name"] else False
     service_name = svc["service_name"].lower()
     replicas = svc["target_num_instances"]
     if svc["current_status"] != "Running":
@@ -396,7 +410,7 @@ def trans_pod_controller(svc):
         "spec": {
             "template": {
                 "metadata": {
-                    "labels": get_svc_labels(svc["uuid"])
+                    "labels": get_svc_labels(svc["uuid"], is_app)
                 },
                 "spec": {
                     "affinity": get_svc_affinity(svc),
@@ -412,14 +426,14 @@ def trans_pod_controller(svc):
                                     "cpu": svc["custom_instance_size"]["cpu"]
                                 }
                             },
-                            "env": get_svc_env(svc["uuid"]),
+                            "env": get_svc_env(svc["uuid"], is_app),
                             # "livenessProbe": get_health_check(svc["uuid"]),
-                            "volumeMounts": get_volume_mounts(svc["uuid"])["mounts"]
+                            "volumeMounts": get_volume_mounts(svc["uuid"], is_app)["mounts"]
                         }
                     ],
                     "hostNetwork": get_host_network(svc),
                     "nodeSelector": get_node_selector(svc),
-                    "volumes": get_volume_mounts(svc["uuid"])["volumes"]
+                    "volumes": get_volume_mounts(svc["uuid"], is_app)["volumes"]
                 }
             },
             "replicas": replicas,
@@ -440,8 +454,8 @@ def trans_pod_controller(svc):
         print "get subnet name {} for subnet_id {}".format(subnet_name, svc["subnet_id"])
         ips = get_instance_ips(svc["instances"])
         k8s_controller["spec"]["template"]["metadata"]["annotations"] = {
-                "subnet.alauda.io/name": subnet_name
-            }
+            "subnet.alauda.io/name": subnet_name
+        }
         if ips:
             k8s_controller["spec"]["template"]["metadata"]["annotations"]["subnet.alauda.io/ipAddrs"] = ips
 
@@ -453,7 +467,8 @@ def trans_pod_controller(svc):
         k8s_controller["spec"]["template"]["spec"]["containers"][0]["args"] = run_commands["args"]
 
     if "health_checks" in svc and len(svc["health_checks"]) > 0:
-        k8s_controller["spec"]["template"]["spec"]["containers"][0]["livenessProbe"] = get_health_check(svc["uuid"])
+        k8s_controller["spec"]["template"]["spec"]["containers"][0]["livenessProbe"] = get_health_check(svc["uuid"],
+                                                                                                        is_app)
 
     kubernetes_attr.append(k8s_controller)
 
@@ -590,6 +605,20 @@ def update_app(app):
     utils.send_request("PATCH", consts.URLS["get_app_by_id"].format(app_id=app["resource"]["uuid"]), data)
 
 
+def get_app_by_name(app_name):
+    apps = utils.send_request("GET", consts.URLS["search_app"].format(app_name=app_name))
+    result = []
+    if apps["count"] > 1:
+        for app in apps["results"]:
+            if app["resource"]["name"] == app_name:
+                result.append(app)
+                break
+    if apps["count"] == 0:
+        print "Attention!!! not found new app named {}".format(app_name)
+    # raise Exception("find {count} instances for {svc_name} ".format(count=data["count"], svc_name=svc_name))
+    return result or apps["results"]
+
+
 def main():
     svc_list = get_service_list()
     for svc in svc_list:
@@ -603,7 +632,7 @@ def main():
                 print "skipped service {} because configed in consts.ExcludedServiceNames".format(service_name)
                 continue
             if service_status not in consts.IncludeServiceStatus:
-                raw_tips = "{service_name} status is {service_status}, input Yes/No for continue or skip ".\
+                raw_tips = "{service_name} status is {service_status}, input Yes/No for continue or skip ". \
                     format(service_name=service_name, service_status=service_name)
                 answer = raw_input(raw_tips)
                 if answer.lower() == "no":
@@ -625,17 +654,18 @@ def main():
 
             print "\nbegin create app for service {} ".format(service_name)
             app_info = create_app(app_data)
-            is_running = True
+            is_running = False
             if service_status != "Running":
                 is_running = False
                 content = "{}-{}-{}\n".format(utils.get_current_project(), service_name, service_status)
                 utils.file_writer("not_running_svc.list", content, "a+")
-                print "service {} current status is {}, will not waiting for created done".format(service_name, service_status)
+                print "service {} current status is {}, will not waiting for created done".format(service_name,
+                                                                                                  service_status)
             if consts.Configs["use_lb"] and is_running:
                 # print app_info
                 print "\nwaiting new app {} for create ".format(service_name)
-                create_done = False
-                for count in range(50):
+                create_done = True
+                for count in range(20):
                     time.sleep(3)
                     app = get_app_by_api(app_info["resource"]["uuid"])
                     app_current_state = app["resource"]["status"]
@@ -644,28 +674,12 @@ def main():
                         create_done = True
                         break
                     else:
-                        print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
+                        print "\n app {} current status is {}, continue waiting...".format(service_name,
+                                                                                           app_current_state)
                 if not create_done:
                     print "app update too slow , please check!"
-                    exit(1)
-                # begin update app for bind old tag
-                app = get_app_by_api(app_info["resource"]["uuid"])
-                update_done = False
-                update_app(app)
-                print "\nwaiting app {} for update ".format(service_name)
-                for count in range(50):
-                    time.sleep(3)
-                    app = get_app_by_api(app_info["resource"]["uuid"])
-                    app_current_state = app["resource"]["status"]
-                    if app_current_state == "Running":
-                        print "\n app {} update done".format(service_name)
-                        update_done = True
-                        break
-                    else:
-                        print "\n app {} current status is {}, continue waiting...".format(service_name, app_current_state)
-                if not update_done:
-                    print "app update too slow , please check!"
-                    exit(1)
+                    #         exit(1)
+                    # begin update app for bind old tag
             # handle lb binding
             lb.handle_lb_for_svc(service_name)
             # if service_status == "Stopped":
@@ -674,7 +688,7 @@ def main():
             utils.task_record(task_single_svc)
             print "!!!!!Status Confirm: old service status is {}, " \
                   "please check if should change by hands".format(service_status)
-            exit(1)
+            # exit(1)
 
 
 if __name__ == '__main__':
