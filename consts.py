@@ -95,4 +95,4 @@ URLS = {
 # kubectl get
 GET_ALL_NS = "kubectl get ns --no-headers -o=custom-columns=NAME:.metadata.name"
 GET_ALL_NS_JSON = "kubectl get ns -o json"
-
+CREATE_CRD = "kubectl create -f crd.yaml"

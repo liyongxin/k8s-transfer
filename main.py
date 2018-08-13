@@ -25,7 +25,10 @@ if __name__ == '__main__':
             format(region_name=consts.Configs["region_name"])
         print "\nPlease execute sql to update region version from v2 to v3;\n"
         exit(1)
-
+    # alb crd
+    if utils.no_common_task_record("create_crd"):
+        lb.create_crd()
+        utils.task_common_record("create_crd")
     # init lb info
     if utils.no_common_task_record("init_lb_list"):
         lb.init_lb_list()
@@ -83,5 +86,7 @@ if __name__ == '__main__':
         if utils.no_task_record("update_jakiro_resource"):
             services.build_volume_sql()
             utils.task_record("update_jakiro_resource")
-
+    if utils.no_common_task_record("restart_alb_tips"):
+        print "Attention: please restart mirana2 and all albs!!!"
+        utils.task_common_record("restart_alb_tips")
 

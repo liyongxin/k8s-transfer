@@ -15,6 +15,10 @@ def init_lb_list():
         utils.file_writer(filename, lb)
 
 
+def create_crd():
+    os.system(consts.CREATE_CRD)
+
+
 def init_svc_lb():
     svc_list = services.get_service_list()
     get_lb_url = consts.URLS["get_lb"]
